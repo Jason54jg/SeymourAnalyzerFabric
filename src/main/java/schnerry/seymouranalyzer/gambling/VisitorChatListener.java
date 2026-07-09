@@ -66,9 +66,11 @@ public class VisitorChatListener {
         }
     }
 
-    private static boolean isSeymourCompletionMessage(String text) {
-        return (text.contains("seymour") && text.contains(SEYMOUR_COMPLETION_PHRASE))
-                || text.contains("offer accepted with seymour") || text.contains("offer accepted w/seymour");
+    private static boolean isSeymourCompletionMessage(String rawLine) {
+        String parsedMsg = StringUtility.removeFormatting(rawLine).trim().toLowerCase();
+
+        return (parsedMsg.startsWith("offer accepted") && parsedMsg.contains("seymour"))
+                || (parsedMsg.startsWith("[npc] seymour:") && parsedMsg.contains(SEYMOUR_COMPLETION_PHRASE));
     }
 
     private record SeymourPieceResult(int rgb, Item item, long timestamp, String skyblockId) {}
