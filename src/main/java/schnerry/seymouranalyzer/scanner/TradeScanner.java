@@ -1,5 +1,7 @@
 package schnerry.seymouranalyzer.scanner;
 
+import schnerry.seymouranalyzer.util.ChatUtils;
+
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -330,7 +332,7 @@ public class TradeScanner {
             msg.append(removeBtn);
         }
         if (!incomingPieces.isEmpty() || !outgoingUuids.isEmpty()) {
-            mc.player.sendSystemMessage(msg);
+            ChatUtils.sendSystemMessage(mc.player, msg);
         }
 
         // Reset trade state

@@ -1,5 +1,7 @@
 package schnerry.seymouranalyzer.debug;
 
+import schnerry.seymouranalyzer.util.ChatUtils;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.component.DataComponentType;
@@ -40,7 +42,7 @@ public class ItemDebugger {
 
         Minecraft client = Minecraft.getInstance();
         if (client.player != null) {
-            client.player.sendSystemMessage(
+            ChatUtils.sendSystemMessage(client.player, 
                 Component.literal("§a[Seymour Debug] §eEnabled! §7Open an inventory, hover over an item and press the §ecapture key§7.")
             );
         }
@@ -71,21 +73,21 @@ public class ItemDebugger {
                     enabled = false;
 
                     if (client.player != null) {
-                        client.player.sendSystemMessage(
+                        ChatUtils.sendSystemMessage(client.player, 
                             Component.literal("§a[Seymour Debug] §7Item data logged to console! Debug mode disabled.")
                         );
                     }
                     SeymourAnalyzer.LOGGER.info("[DEBUG] Debug mode disabled after logging item");
                 } else {
                     if (client.player != null) {
-                        client.player.sendSystemMessage(
+                        ChatUtils.sendSystemMessage(client.player, 
                             Component.literal("§a[Seymour Debug] §cNo item hovered! Open an inventory and hover over an item first.")
                         );
                     }
                 }
             } else {
                 if (client.player != null) {
-                    client.player.sendSystemMessage(
+                    ChatUtils.sendSystemMessage(client.player, 
                         Component.literal("§a[Seymour Debug] §cOpen an inventory screen first, then hover over an item and press the key.")
                     );
                 }
@@ -232,21 +234,21 @@ public class ItemDebugger {
                     if (!hex.isEmpty()) {
                         // Copy to clipboard
                         client.keyboardHandler.setClipboard(hex);
-                        client.player.sendSystemMessage(
+                        ChatUtils.sendSystemMessage(client.player, 
                             Component.literal("§a[Seymour] §7Copied piece hex to clipboard: §e" + hex)
                         );
                     } else {
-                        client.player.sendSystemMessage(
+                        ChatUtils.sendSystemMessage(client.player, 
                             Component.literal("§a[Seymour] §cNo piece hex found in hovered item.")
                         );
                     }
                 } else {
-                    client.player.sendSystemMessage(
+                    ChatUtils.sendSystemMessage(client.player, 
                         Component.literal("§a[Seymour] §cNo item hovered! Open an inventory and hover over an item first.")
                     );
                 }
             } else {
-                client.player.sendSystemMessage(
+                ChatUtils.sendSystemMessage(client.player, 
                     Component.literal("§a[Seymour] §cOpen an inventory screen first, then hover over an item and press the key.")
                 );
             }

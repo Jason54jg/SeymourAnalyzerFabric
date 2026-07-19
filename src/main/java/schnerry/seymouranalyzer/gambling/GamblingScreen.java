@@ -51,7 +51,8 @@ public class GamblingScreen extends Screen {
         winner = strip.get(WINNER_INDEX);
     }
 
-    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+    // Content hook, called by extractRenderState()/render() below depending on Minecraft version.
+    private void renderContent(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         long now = System.currentTimeMillis();
         if (startMs < 0) startMs = now;
         long elapsed = now - startMs;
@@ -86,11 +87,19 @@ public class GamblingScreen extends Screen {
         if (!rolling) renderInspectionPanel(g, now);
     }
 
+    //? if <26.1 {
+    /*@Override
+    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        super.render(g, mouseX, mouseY, delta);
+        renderContent(g, mouseX, mouseY, delta);
+    }
+    *///?} else {
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         super.extractRenderState(g, mouseX, mouseY, delta);
-        render(g, mouseX, mouseY, delta);
+        renderContent(g, mouseX, mouseY, delta);
     }
+    //?}
 
     private void playTick(float pitch) {
         if (this.minecraft == null) return;

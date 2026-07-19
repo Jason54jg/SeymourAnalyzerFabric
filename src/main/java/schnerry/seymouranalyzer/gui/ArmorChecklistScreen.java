@@ -1,5 +1,7 @@
 package schnerry.seymouranalyzer.gui;
 
+import schnerry.seymouranalyzer.util.ChatUtils;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -700,7 +702,7 @@ public class ArmorChecklistScreen extends ModScreen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
+    public void renderContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
         // Check if custom colors need reloading (e.g., from /seymour add command)
         reloadCustomColorsIfNeeded();
 
@@ -711,7 +713,7 @@ public class ArmorChecklistScreen extends ModScreen {
 
         if (pageOrder.isEmpty() || currentPage >= pageOrder.size()) {
             guiGraphics.text(this.font, "No checklist data loaded!", this.width / 2 - 70, this.height / 2, 0xFFFF5555);
-            super.render(guiGraphics, mouseX, mouseY, delta);
+            super.renderContent(guiGraphics, mouseX, mouseY, delta);
             return;
         }
 
@@ -736,7 +738,7 @@ public class ArmorChecklistScreen extends ModScreen {
         // Footer
         guiGraphics.text(this.font, "§7Press §eESC §7to close | Click pages below to switch", this.width / 2 - 120, this.height - 10, 0xFFFFFFFF);
 
-        super.render(guiGraphics, mouseX, mouseY, delta);
+        super.renderContent(guiGraphics, mouseX, mouseY, delta);
     }
 
     private void drawContextMenu(GuiGraphicsExtractor guiGraphics) {
@@ -1025,7 +1027,7 @@ public class ArmorChecklistScreen extends ModScreen {
 
             if (allPieces.isEmpty()) {
                 if (minecraft != null && minecraft.player != null) {
-                    minecraft.player.sendSystemMessage(Component.literal("§c[Armor Checklist] No pieces found for this entry!"));
+                    ChatUtils.sendSystemMessage(minecraft.player, Component.literal("§c[Armor Checklist] No pieces found for this entry!"));
                 }
                 return false;
             }
@@ -1059,7 +1061,7 @@ public class ArmorChecklistScreen extends ModScreen {
         ArmorPiece match = entry.foundPieces.get(clickedPieceType);
         if (match == null) {
             if (minecraft != null && minecraft.player != null) {
-                minecraft.player.sendSystemMessage(Component.literal("§c[Armor Checklist] No piece found for this slot!"));
+                ChatUtils.sendSystemMessage(minecraft.player, Component.literal("§c[Armor Checklist] No piece found for this slot!"));
             }
             return false;
         }
@@ -1105,14 +1107,14 @@ public class ArmorChecklistScreen extends ModScreen {
                     }
 
                     String hexString = String.join(" ", hexList);
-                    minecraft.player.sendSystemMessage(Component.literal("§a[Armor Checklist] Searching for " + contextMenu.allPieces.size() + " piece(s)..."));
+                    ChatUtils.sendSystemMessage(minecraft.player, Component.literal("§a[Armor Checklist] Searching for " + contextMenu.allPieces.size() + " piece(s)..."));
                     // Execute search command with all hexes
                     minecraft.player.connection.sendCommand("seymour search " + hexString);
                 }
             } else {
                 // Find single piece
                 if (minecraft != null && minecraft.player != null && contextMenu.piece != null) {
-                    minecraft.player.sendSystemMessage(Component.literal("§a[Armor Checklist] Searching for pieces with hex " + contextMenu.piece.getHexcode() + "..."));
+                    ChatUtils.sendSystemMessage(minecraft.player, Component.literal("§a[Armor Checklist] Searching for pieces with hex " + contextMenu.piece.getHexcode() + "..."));
                     // Execute search command
                     minecraft.player.connection.sendCommand("seymour search " + contextMenu.piece.getHexcode());
                 }
@@ -1258,7 +1260,7 @@ public class ArmorChecklistScreen extends ModScreen {
         try {
             this.minecraft.keyboardHandler.setClipboard(sb.toString());
             if (minecraft != null && minecraft.player != null) {
-                minecraft.player.sendSystemMessage(
+                ChatUtils.sendSystemMessage(minecraft.player, 
                     Component.literal("\u00a7a[Seymour] \u00a77Copied " + totalMissing + " missing checklist slots to clipboard!"));
             }
         } catch (Exception ignored) {}

@@ -107,11 +107,19 @@ public class ColorPickerScreen extends ModScreen {
     // extractRenderState calls super (which renders widgets) and then render().
     // If we draw the panel fill inside render(), it covers already-rendered widgets.
     // Fix: draw the opaque panel background BEFORE super so widgets appear on top.
+    //? if <26.1 {
+    /*@Override
+    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        drawPanelBackground(g);
+        super.render(g, mouseX, mouseY, delta); // renders widgets, then calls renderContent()
+    }
+    *///?} else {
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         drawPanelBackground(g);
-        super.extractRenderState(g, mouseX, mouseY, delta); // renders widgets, then calls render()
+        super.extractRenderState(g, mouseX, mouseY, delta); // renders widgets, then calls renderContent()
     }
+    //?}
 
     private void drawPanelBackground(GuiGraphicsExtractor g) {
         int px = panelX(), py = panelY();
@@ -130,10 +138,11 @@ public class ColorPickerScreen extends ModScreen {
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
-    // Called by ModScreen after widgets are rendered – draws picker content on top
-    // (SV square, sliders, preview, labels). Buttons/EditBox are already rendered by super.
+    // Draws picker content on top (SV square, sliders, preview, labels).
+    // Buttons/EditBox are already rendered by super. Invoked virtually by ModScreen's
+    // render()/extractRenderState() chain via the renderContent() hook.
     @Override
-    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+    protected void renderContent(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         int sx = sqX(), sy = sqY();
 
         // ── SV square (Saturation × Value) ──────────────────────────────────
@@ -234,7 +243,7 @@ public class ColorPickerScreen extends ModScreen {
         int hexInputX = sqX() + SQ_W - 65;
         g.text(this.font, "Hex: #", hexInputX - 38, hexLabelY, 0xFFAAAAAA);
 
-        super.render(g, mouseX, mouseY, delta); // tick()
+        super.renderContent(g, mouseX, mouseY, delta); // tick()
     }
 
     // ── Mouse interaction ─────────────────────────────────────────────────────

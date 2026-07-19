@@ -1,5 +1,7 @@
 package schnerry.seymouranalyzer.gui;
 
+import schnerry.seymouranalyzer.util.ChatUtils;
+
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Button;
@@ -84,7 +86,7 @@ public class WordMatchesScreen extends ModScreen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
+    public void renderContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
         // Don't fill background - let text render properly
 
         // Title
@@ -107,7 +109,7 @@ public class WordMatchesScreen extends ModScreen {
             drawContextMenu(guiGraphics);
         }
 
-        super.render(guiGraphics, mouseX, mouseY, delta);
+        super.renderContent(guiGraphics, mouseX, mouseY, delta);
     }
 
     private void drawContextMenu(GuiGraphicsExtractor guiGraphics) {
@@ -375,7 +377,7 @@ public class WordMatchesScreen extends ModScreen {
 
         copyToClipboard(sb.toString());
         if (minecraft != null && minecraft.player != null) {
-            minecraft.player.sendSystemMessage(
+            ChatUtils.sendSystemMessage(minecraft.player, 
                 Component.literal("\u00a7a[Seymour] \u00a77Copied " + wordMatches.size() + " word matches to clipboard!"));
         }
     }

@@ -1,5 +1,7 @@
 package schnerry.seymouranalyzer.scanner;
 
+import schnerry.seymouranalyzer.util.ChatUtils;
+
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -153,13 +155,13 @@ public class ChestScanner {
                             count + " §7piece" + (count == 1 ? "" : "s") + " from the database"))));
                 msg.append(undoBtn);
 
-                client.player.sendSystemMessage(msg);
+                ChatUtils.sendSystemMessage(client.player, msg);
             }
         } else {
             // Export mode – no badge needed, just send the count message
             if (client.player != null) {
                 int count = batchCopy.size();
-                client.player.sendSystemMessage(
+                ChatUtils.sendSystemMessage(client.player, 
                     Component.literal("§a[Seymour Analyzer] §7Added §e" + count +
                         "§7 piece" + (count == 1 ? "" : "s") +
                         " to export collection! Total: §e" + exportCollection.size())
@@ -493,13 +495,13 @@ public class ChestScanner {
                                 pieceCount + " §7piece" + (pieceCount == 1 ? "" : "s") + " from the database"))));
                     msg.append(undoBtn);
 
-                    client.player.sendSystemMessage(msg);
+                    ChatUtils.sendSystemMessage(client.player, msg);
                 }
             } else if (!frameBatchUuids.isEmpty()) {
                 // exportingEnabled is true here
                 int pieceCount = frameBatchUuids.size();
                 if (client.player != null) {
-                    client.player.sendSystemMessage(
+                    ChatUtils.sendSystemMessage(client.player, 
                         Component.literal("§a[Seymour Analyzer] §7Added §e" + pieceCount +
                             "§7 piece" + (pieceCount == 1 ? "" : "s") +
                             " from item frames to export collection! Total: §e" + exportCollection.size())

@@ -78,8 +78,8 @@ public class BestSetsScreen extends ModScreen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
-        super.render(guiGraphics, mouseX, mouseY, delta);
+    public void renderContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
+        super.renderContent(guiGraphics, mouseX, mouseY, delta);
 
         // Title
         String title = "§l§nBest Matching Sets";

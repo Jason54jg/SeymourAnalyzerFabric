@@ -44,16 +44,26 @@ public abstract class ModScreen extends Screen {
         GuiScaleManager.getInstance().onModGuiClose();
     }
 
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
+    // Content hook - subclasses override this (not render()/extractRenderState() directly)
+    // to draw on top of widgets. Kept under one name across Minecraft versions.
+    protected void renderContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
         // Check scale is still correct each frame
         GuiScaleManager.getInstance().tick();
     }
 
+    //? if <26.1 {
+    /*@Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        super.render(guiGraphics, mouseX, mouseY, delta);
+        renderContent(guiGraphics, mouseX, mouseY, delta);
+    }
+    *///?} else {
     @Override
     public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(guiGraphics, mouseX, mouseY, delta);
-        render(guiGraphics, mouseX, mouseY, delta);
+        renderContent(guiGraphics, mouseX, mouseY, delta);
     }
+    //?}
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean isOutOfBounds) {

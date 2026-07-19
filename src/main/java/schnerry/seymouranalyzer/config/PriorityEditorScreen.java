@@ -59,7 +59,7 @@ public class PriorityEditorScreen extends ModScreen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
+    public void renderContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
         // Title
         guiGraphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
 
@@ -99,7 +99,7 @@ public class PriorityEditorScreen extends ModScreen {
             renderPriorityItem(guiGraphics, priorities.get(draggedIndex), listX, dragY, draggedIndex);
         }
 
-        super.render(guiGraphics, mouseX, mouseY, delta);
+        super.renderContent(guiGraphics, mouseX, mouseY, delta);
     }
 
     private void renderPriorityItem(GuiGraphicsExtractor guiGraphics, MatchPriority priority, int x, int y, int index) {

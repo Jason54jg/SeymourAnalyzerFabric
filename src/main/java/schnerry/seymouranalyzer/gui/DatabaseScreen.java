@@ -1,5 +1,7 @@
 package schnerry.seymouranalyzer.gui;
 
+import schnerry.seymouranalyzer.util.ChatUtils;
+
 import lombok.Setter;
 import com.mojang.blaze3d.platform.Window;
 import net.minecraft.client.Minecraft;
@@ -226,7 +228,7 @@ public class DatabaseScreen extends ModScreen {
         wildcardHelpButton = net.minecraft.client.gui.components.Button.builder(Component.literal("?"), btn -> {
             // on click: show a brief chat message with help as well
             if (minecraft != null && minecraft.player != null) {
-                minecraft.player.sendSystemMessage(Component.literal("Wildcard search help: use X for any hex digit; W/Y/Z are bound wildcards."));
+                ChatUtils.sendSystemMessage(minecraft.player, Component.literal("Wildcard search help: use X for any hex digit; W/Y/Z are bound wildcards."));
             }
         }).bounds(helpX, 10, 16, 16).build();
         this.addRenderableWidget(wildcardHelpButton);
@@ -373,7 +375,7 @@ public class DatabaseScreen extends ModScreen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
+    public void renderContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
         // Don't fill ANY background - let default background show through
         // Text renders correctly without background fills covering it
 
@@ -521,7 +523,7 @@ public class DatabaseScreen extends ModScreen {
 
             // DON'T return early - still need to render widgets!
             // Render widgets so buttons still work
-            super.render(guiGraphics, mouseX, mouseY, delta);
+            super.renderContent(guiGraphics, mouseX, mouseY, delta);
             return;
         }
 
@@ -599,7 +601,7 @@ public class DatabaseScreen extends ModScreen {
         }
 
         // Render widgets LAST so they don't cover our text
-        super.render(guiGraphics, mouseX, mouseY, delta);
+        super.renderContent(guiGraphics, mouseX, mouseY, delta);
 
         // Draw wildcard help tooltip when hovering the help button
         int helpX = Math.max(10, this.width - 275);
@@ -984,7 +986,7 @@ public class DatabaseScreen extends ModScreen {
             // Option 1: "Find Piece" - execute search command
             if (minecraft != null && minecraft.player != null) {
                 String hex = contextMenu.piece.getHexcode();
-                minecraft.player.sendSystemMessage(Component.literal("§a[Seymour] §7Searching for pieces with hex " + hex + "..."));
+                ChatUtils.sendSystemMessage(minecraft.player, Component.literal("§a[Seymour] §7Searching for pieces with hex " + hex + "..."));
                 minecraft.player.connection.sendCommand("seymour search " + hex);
             }
             contextMenu = null;
@@ -1003,8 +1005,8 @@ public class DatabaseScreen extends ModScreen {
             filterAndSort();
 
             if (minecraft != null && minecraft.player != null) {
-                minecraft.player.sendSystemMessage(Component.literal("§a[Seymour] §7Removed piece: §f" + pieceName + " §7(" + hex + ")"));
-                minecraft.player.sendSystemMessage(Component.literal("§a[Seymour] §7New piece count: §e" + allPieces.size()));
+                ChatUtils.sendSystemMessage(minecraft.player, Component.literal("§a[Seymour] §7Removed piece: §f" + pieceName + " §7(" + hex + ")"));
+                ChatUtils.sendSystemMessage(minecraft.player, Component.literal("§a[Seymour] §7New piece count: §e" + allPieces.size()));
             }
 
             contextMenu = null;
@@ -1478,7 +1480,7 @@ public class DatabaseScreen extends ModScreen {
         try {
             this.minecraft.keyboardHandler.setClipboard(sb.toString());
             if (minecraft != null && minecraft.player != null) {
-                minecraft.player.sendSystemMessage(
+                ChatUtils.sendSystemMessage(minecraft.player, 
                     Component.literal("\u00a7a[Seymour] \u00a77Copied " + filteredPieces.size() + " dupe pieces to clipboard!"));
             }
         } catch (Exception ignored) {}

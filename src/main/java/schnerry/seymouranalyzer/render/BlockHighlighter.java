@@ -1,20 +1,21 @@
 package schnerry.seymouranalyzer.render;
 
 import net.minecraft.client.Minecraft;
+//? if <26.2 {
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+//?}
+import net.minecraft.core.BlockPos;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Manages and renders highlighted block positions in the world.
- * Updated for 1.21.10 rendering API.
  */
 public class BlockHighlighter {
     private static BlockHighlighter instance;
@@ -67,6 +68,10 @@ public class BlockHighlighter {
         return !highlightedBlocks.isEmpty();
     }
 
+    // MultiBufferSource/immediate-mode line rendering was removed entirely in 26.2 in favor of
+    // an extraction-based world render pipeline (FabricRenderState/RenderPipeline). Porting this
+    // feature to that model is unimplemented for now - block highlighting is a no-op on >=26.2.
+    //? if <26.2 {
     /**
      * Called by DebugRendererMixin to render block highlights.
      */
@@ -136,4 +141,5 @@ public class BlockHighlighter {
         consumer.addVertex(matrix, x1, y1, z1).setColor(r, g, b, a).setNormal(nx, ny, nz).setLineWidth(2.0f);
         consumer.addVertex(matrix, x2, y2, z2).setColor(r, g, b, a).setNormal(nx, ny, nz).setLineWidth(2.0f);
     }
+    //?}
 }

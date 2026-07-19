@@ -4,7 +4,13 @@ import lombok.Getter;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+//? if <26.1 {
+/*import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+*///?} else {
+//? if <26.2 {
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+//?}
+//?}
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 import schnerry.seymouranalyzer.command.SeymourCommand;
@@ -35,14 +41,31 @@ public class SeymourAnalyzerClient implements ClientModInitializer {
         // Initialize scanner
         chestScanner = new ChestScanner();
 
-        // Initialize BlockHighlighter and register world render event
+        // Initialize BlockHighlighter. DebugRenderer.render(...) doesn't exist past 1.21.10 (it
+        // became emitGizmos(), which has no PoseStack/buffer access), so on every remaining
+        // version we hook a Fabric API render event instead of mixing in directly:
+        // - 1.21.11: WorldRenderEvents.BEFORE_DEBUG_RENDER (LevelRenderEvents doesn't exist yet).
+        // - 26.1.x: LevelRenderEvents.BEFORE_GIZMOS (WorldRenderEvents was renamed to this).
+        // - >=26.2: unimplemented - MultiBufferSource/immediate-mode rendering was removed
+        //   entirely (see BlockHighlighter.java).
         BlockHighlighter.getInstance();
+        //? if <26.1 {
+/*WorldRenderEvents.BEFORE_DEBUG_RENDER.register(context -> {
+            BlockHighlighter highlighter = BlockHighlighter.getInstance();
+            if (!highlighter.hasHighlights()) return;
+            Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().position();
+            highlighter.renderHighlights(context.matrices(), context.consumers(), cameraPos);
+        });
+        *///?} else {
+        //? if <26.2 {
         LevelRenderEvents.BEFORE_GIZMOS.register(context -> {
             BlockHighlighter highlighter = BlockHighlighter.getInstance();
             if (!highlighter.hasHighlights()) return;
             Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().position();
             highlighter.renderHighlights(context.poseStack(), context.bufferSource(), cameraPos);
         });
+        //?}
+        //?}
         SeymourAnalyzer.LOGGER.info("Initialized BlockHighlighter");
 
         // Initialize ItemSlotHighlighter (registers screen render events)
