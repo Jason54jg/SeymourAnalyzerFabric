@@ -10,6 +10,7 @@ base.archivesName = property("mod.id") as String
 
 repositories {
 	maven("https://maven.shedaniel.me/") { name = "Shedaniel" }
+	maven("https://maven.terraformersmc.com/releases/") { name = "TerraformersMC" }
 }
 
 val requiredJava: JavaVersion = when {
@@ -26,6 +27,9 @@ dependencies {
 	modImplementation("net.fabricmc:fabric-loader:${property("deps.fabric_loader")}")
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${property("deps.fabric_api")}")
 	modImplementation("me.shedaniel.cloth:cloth-config-fabric:${property("deps.cloth_config")}")
+	// Optional integration - not bundled/required, see fabric.mod.json's "recommends" and
+	// ModMenuIntegration's javadoc for why this is safe when Mod Menu isn't installed.
+	modImplementation("com.terraformersmc:modmenu:${property("deps.modmenu")}")
 
 	compileOnly("org.projectlombok:lombok:${property("deps.cloth_config_lombok")}")
 	annotationProcessor("org.projectlombok:lombok:${property("deps.cloth_config_lombok")}")
