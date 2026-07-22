@@ -62,6 +62,7 @@ val modName = property("mod.name") as String
 val modVersion = property("mod.version") as String
 val modMcCompat = property("mod.mc_compat") as String
 val mixinJava = "JAVA_${requiredJava.majorVersion}"
+val fabricJavaDepend = ">=${requiredJava.majorVersion}"
 
 tasks {
 	processResources {
@@ -69,7 +70,8 @@ tasks {
 			"id" to modId,
 			"name" to modName,
 			"version" to modVersion,
-			"minecraft" to modMcCompat
+			"minecraft" to modMcCompat,
+			"java" to fabricJavaDepend
 		)
 		propsMap.forEach { (k, v) -> inputs.property(k, v) }
 
