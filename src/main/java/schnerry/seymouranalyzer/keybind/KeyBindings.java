@@ -86,15 +86,15 @@ public class KeyBindings {
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (openDatabaseGuiKey.consumeClick()) {
+            if (isKeyMappingBound(openDatabaseGuiKey) && openDatabaseGuiKey.consumeClick()) {
                 client.setScreen(new DatabaseScreen(null));
             }
 
-            if (openConfigGuiKey.consumeClick()) {
+            if (isKeyMappingBound(openConfigGuiKey) && openConfigGuiKey.consumeClick()) {
                 client.setScreen(ConfigScreen.createConfigScreen(client.screen));
             }
 
-            if (openChecklistGuiKey.consumeClick()) {
+            if (isKeyMappingBound(openChecklistGuiKey) && openChecklistGuiKey.consumeClick()) {
                 client.setScreen(new ArmorChecklistScreen(null));
             }
         });
@@ -105,7 +105,7 @@ public class KeyBindings {
                 ScreenKeyboardEvents.afterKeyPress(screen).register(
                     (Screen s, KeyEvent context) -> {
                         InputConstants.Key boundKey = KeyMappingHelper.getBoundKeyOf(debugCaptureKey);
-                        if (boundKey.getType() == InputConstants.Type.KEYSYM && boundKey.getValue() == context.key()) {
+                        if (isBoundKeyPress(boundKey, context)) {
                             ItemDebugger.getInstance().onCaptureKeyPressed();
                         }
                     }
@@ -119,7 +119,7 @@ public class KeyBindings {
                 ScreenKeyboardEvents.afterKeyPress(screen).register(
                     (Screen s, KeyEvent context) -> {
                         InputConstants.Key boundKey = KeyMappingHelper.getBoundKeyOf(copyPieceKey);
-                        if (boundKey.getType() == InputConstants.Type.KEYSYM && boundKey.getValue() == context.key()) {
+                        if (isBoundKeyPress(boundKey, context)) {
                             ItemDebugger.getInstance().copyCurrentPieceHexToClipboard();
                         }
                     }
@@ -133,7 +133,7 @@ public class KeyBindings {
                 ScreenKeyboardEvents.afterKeyPress(screen).register(
                     (Screen s, KeyEvent context) -> {
                         InputConstants.Key boundKey = KeyMappingHelper.getBoundKeyOf(openPieceInDBKey);
-                        if (boundKey.getType() == InputConstants.Type.KEYSYM && boundKey.getValue() == context.key()) {
+                        if (isBoundKeyPress(boundKey, context)) {
                             String hex = ItemStackUtils.extractHex(InfoBoxRenderer.getInstance().getLastHoveredStack());
                             Minecraft mc = Minecraft.getInstance();
                             DatabaseScreen dbScreen = new DatabaseScreen(screen);
@@ -144,6 +144,17 @@ public class KeyBindings {
                 );
             }
         });
+    }
+
+    private static boolean isKeyMappingBound(KeyMapping keyMapping) {
+        InputConstants.Key key = KeyMappingHelper.getBoundKeyOf(keyMapping);
+        return key != InputConstants.UNKNOWN;
+    }
+
+    private static boolean isBoundKeyPress(InputConstants.Key boundKey, KeyEvent context) {
+        return boundKey != InputConstants.UNKNOWN
+            && boundKey.getType() == InputConstants.Type.KEYSYM
+            && boundKey.getValue() == context.key();
     }
 }
 
