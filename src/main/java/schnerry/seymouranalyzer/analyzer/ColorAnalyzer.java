@@ -16,7 +16,12 @@ import java.util.stream.Collectors;
 public class ColorAnalyzer {
     private static ColorAnalyzer INSTANCE;
     private static final double PRIORITY_DELTA_E_WINDOW = 0.75;
+    private static final int SLOT_HELMET = 1;
+    private static final int SLOT_CHESTPLATE = 1 << 1;
+    private static final int SLOT_LEGGINGS = 1 << 2;
+    private static final int SLOT_BOOTS = 1 << 3;
     private final ColorDatabase colorDatabase;
+    private final Map<String, Integer> colorNameSlotMaskCache = new HashMap<>();
 
     private ColorAnalyzer() {
         this.colorDatabase = ColorDatabase.getInstance();
@@ -241,13 +246,17 @@ public class ColorAnalyzer {
         ClothConfig config = ClothConfig.getInstance();
         List<ColorMatch> matches = new ArrayList<>();
         ColorMath.LAB itemLab = colorDatabase.getLabForHex(itemHex);
+        boolean needsFakeClassification = config.isPieceSpecificEnabled() || !config.isShowHighFakes();
 
         for (Map.Entry<String, String> entry : colorMap.entrySet()) {
             String colorName = entry.getKey();
             String targetHex = entry.getValue();
 
-            // Determine if this match is a "fake" (piece-specific color matched against the wrong slot)
-            boolean isFake = pieceType != null && !canMatchPiece(colorName, pieceType);
+            // Fake classification is only needed when it can affect filtering.
+            boolean isFake = false;
+            if (needsFakeClassification && pieceType != null) {
+                isFake = !canMatchPiece(colorName, pieceType);
+            }
 
             // Piece-specific filtering: when enabled, hard-exclude fake matches
             if (config.isPieceSpecificEnabled() && isFake) {
@@ -285,25 +294,33 @@ public class ColorAnalyzer {
             return !"helmet".equals(pieceType);
         }
 
-        // Build the union of all explicitly mentioned piece types by splitting on
-        // "/" (alternative names for same hex) and "+" (multi-slot compounds).
-        // Parts with no slot keywords don't contribute — they're just name aliases.
-        Set<String> mentionedSlots = new HashSet<>();
+        // Cache parsed slot metadata for each unique color name to avoid repeated split/parsing.
+        int slotMask = colorNameSlotMaskCache.computeIfAbsent(lower, this::buildSlotMask);
 
-        for (String segment : colorName.split("/")) {
+        // If no slot keywords found anywhere -> generic color -> allow for all slots.
+        if (slotMask == 0) return true;
+
+        return switch (pieceType) {
+            case "helmet" -> (slotMask & SLOT_HELMET) != 0;
+            case "chestplate" -> (slotMask & SLOT_CHESTPLATE) != 0;
+            case "leggings" -> (slotMask & SLOT_LEGGINGS) != 0;
+            case "boots" -> (slotMask & SLOT_BOOTS) != 0;
+            default -> true;
+        };
+    }
+
+    private int buildSlotMask(String lowerColorName) {
+        int slotMask = 0;
+        for (String segment : lowerColorName.split("/")) {
             for (String part : segment.split("\\+")) {
-                part = part.trim();
-                if (PieceTypeUtil.matchesPieceType(part, "helmet"))     mentionedSlots.add("helmet");
-                if (PieceTypeUtil.matchesPieceType(part, "chestplate")) mentionedSlots.add("chestplate");
-                if (PieceTypeUtil.matchesPieceType(part, "leggings"))   mentionedSlots.add("leggings");
-                if (PieceTypeUtil.matchesPieceType(part, "boots"))      mentionedSlots.add("boots");
+                String trimmed = part.trim();
+                if (PieceTypeUtil.matchesPieceType(trimmed, "helmet")) slotMask |= SLOT_HELMET;
+                if (PieceTypeUtil.matchesPieceType(trimmed, "chestplate")) slotMask |= SLOT_CHESTPLATE;
+                if (PieceTypeUtil.matchesPieceType(trimmed, "leggings")) slotMask |= SLOT_LEGGINGS;
+                if (PieceTypeUtil.matchesPieceType(trimmed, "boots")) slotMask |= SLOT_BOOTS;
             }
         }
-
-        // If no slot keywords found anywhere → generic color → allow for all slots
-        if (mentionedSlots.isEmpty()) return true;
-
-        return mentionedSlots.contains(pieceType);
+        return slotMask;
     }
 
     private int calculateTier(double deltaE, boolean isCustom, boolean isFade) {
