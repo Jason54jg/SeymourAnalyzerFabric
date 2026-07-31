@@ -158,6 +158,14 @@ public class ConfigScreen {
                 .build());
 
         filterCategory.addEntry(entryBuilder.startBooleanToggle(
+                Component.literal("Show High Fakes"),
+                config.isShowHighFakes())
+                .setDefaultValue(true)
+                .setTooltip(Component.literal("Show fake piece matches with ΔE > 2.00 (T3+)"))
+                .setSaveConsumer(config::setShowHighFakes)
+                .build());
+
+        filterCategory.addEntry(entryBuilder.startBooleanToggle(
                 Component.literal("3-Piece Sets"),
                 config.isThreePieceSetsEnabled())
                 .setDefaultValue(true)
