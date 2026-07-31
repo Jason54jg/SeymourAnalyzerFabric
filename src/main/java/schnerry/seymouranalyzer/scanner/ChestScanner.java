@@ -14,7 +14,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 import schnerry.seymouranalyzer.SeymourAnalyzer;
 import schnerry.seymouranalyzer.analyzer.ColorAnalyzer;
 import schnerry.seymouranalyzer.analyzer.PatternDetector;
@@ -178,10 +179,18 @@ public class ChestScanner {
 
         // ── Location update: ALWAYS active, no scan-mode guard ───────────────
         // Keeps chest coordinates up to date whenever the player opens any container.
+        // Two independent guards prevent false updates:
+        //   1. Title blacklist  – catches known non-chest screens (trade, auctions) even if
+        //                         the player happens to be looking at a block while they're open.
+        //   2. Storage-block check – hitResult must point at a real chest/barrel/shulker,
+        //                            which reliably excludes NPC shops, trade menus, etc.
         if (client.screen instanceof AbstractContainerScreen<?> screen) {
             String title = screen.getTitle().getString();
-            boolean isTradeOrAuction = title.contains("Auctions") || title.startsWith("Trading with ");
-            if (!isTradeOrAuction && now - lastLocationUpdateTime >= LOCATION_UPDATE_INTERVAL_MS) {
+            boolean isKnownNonChestScreen = title.contains("Auctions")
+                || title.startsWith("Trading with ")
+                || TradeScanner.isHypixelTradeTitle(title);
+            if (!isKnownNonChestScreen && isPlayerLookingAtStorageBlock(client)
+                    && now - lastLocationUpdateTime >= LOCATION_UPDATE_INTERVAL_MS) {
                 lastLocationUpdateTime = now;
                 updateKnownPieceLocations(screen, client);
             }
@@ -510,6 +519,30 @@ public class ChestScanner {
         } catch (Exception e) {
             SeymourAnalyzer.LOGGER.error("Error scanning item frames", e);
         }
+    }
+
+    /**
+     * Returns true if the player's crosshair is currently pointing at a physical
+     * storage block (chest, trapped chest, barrel, or any shulker box).
+     * <p>
+     * This is used to guard location updates so that only genuine chest opens
+     * trigger a coordinate update. Trade menus, NPC shops, and auction houses are
+     * opened by interacting with entities, not blocks, so hitResult will never be
+     * a storage block when those screens are open.
+     */
+    private boolean isPlayerLookingAtStorageBlock(Minecraft client) {
+        if (client.player == null || client.level == null) return false;
+        HitResult hit = client.hitResult;
+        if (hit == null || hit.getType() != HitResult.Type.BLOCK) return false;
+        BlockPos pos = ((BlockHitResult) hit).getBlockPos();
+        net.minecraft.world.level.block.Block block = client.level.getBlockState(pos).getBlock();
+        return block == Blocks.CHEST
+            || block == Blocks.TRAPPED_CHEST
+            || block == Blocks.BARREL
+            || block == Blocks.HOPPER
+            || block == Blocks.DROPPER
+            || block == Blocks.DISPENSER
+            || block instanceof ShulkerBoxBlock;
     }
 
     /**

@@ -168,7 +168,7 @@ public class TradeScanner {
      * Detects Hypixel's trade screen whose title is "You          PlayerName"
      * (left = "You", right = partner name, separated by many spaces).
      */
-    private static boolean isHypixelTradeTitle(String cleanTitle) {
+    public static boolean isHypixelTradeTitle(String cleanTitle) {
         if (!cleanTitle.startsWith(TRADE_TITLE_YOU)) return false;
         // Must have at least 2 spaces (the multi-space separator) and a trailing word
         String after = cleanTitle.substring(TRADE_TITLE_YOU.length());
@@ -196,16 +196,18 @@ public class TradeScanner {
             String uuid = ItemStackUtils.getOrCreateItemUUID(stack);
             if (uuid == null) continue;
 
-            // Classification: was this item in player inventory when trade opened?
-            boolean isMine = playerInventorySnapshot.contains(uuid);
+            // Classification with duplicate-safe behavior:
+            // - Mine at trade open (snapshot) => outgoing candidate (remove if in DB)
+            // - Not mine + not in DB           => incoming candidate (add)
+            // - Not mine + already in DB       => ignore (received duplicate UUID)
+            boolean isMineBySnapshot = playerInventorySnapshot.contains(uuid);
+            boolean existsInDb = CollectionManager.getInstance().hasPiece(uuid);
 
-            if (isMine) {
-                // My piece – only count as outgoing if it's also in DB
-                if (CollectionManager.getInstance().hasPiece(uuid)) {
+            if (isMineBySnapshot) {
+                if (existsInDb) {
                     outgoingUuids.add(uuid);
                 }
-            } else {
-                // Their piece – incoming, not yet in our DB
+            } else if (!existsInDb) {
                 if (!incomingPieces.containsKey(uuid)) {
                     ArmorPiece piece = analyseStack(stack, itemName, uuid);
                     if (piece != null) {
@@ -275,9 +277,11 @@ public class TradeScanner {
         }
         completionPending = true;
         // Do a final scan right now so data is fresh
-        if (mc.screen instanceof AbstractContainerScreen<?> screen &&
-            screen.getTitle().getString().startsWith(TRADE_TITLE_PREFIX)) {
+        if (mc.screen instanceof AbstractContainerScreen<?> screen) {
+            String cleanTitle = screen.getTitle().getString().replaceAll("§.", "");
+            if (cleanTitle.contains(TRADE_TITLE_PREFIX.trim()) || isHypixelTradeTitle(cleanTitle)) {
             scanTradeSlots(mc, screen);
+            }
         }
         fireTradeMessage(mc);
     }

@@ -24,10 +24,9 @@
       {"hex": "FFE501", "name": "Helianthus Leggings", "pieces": ["leggings"]},
       {"hex": "E0FCF7", "name": "Speedster Armor", "pieces": ["helmet", "chestplate", "leggings", "boots"]},
       {"hex": "FF700A", "name": "Thermodynamic Armor 3p", "pieces": ["chestplate", "leggings", "boots"]},
-      {"hex": "CBD2DB", "name": "Rabbit Armor", "pieces": ["helmet", "chestplate", "leggings", "boots"]},
+      {"hex": "CBD2DB", "name": "Rabbit Armor", "pieces": ["chestplate", "leggings", "boots"]},
       {"hex": "FF0000", "name": "Mushroom Armor", "pieces": ["helmet", "chestplate", "leggings", "boots"]},
       {"hex": "FFAC00", "name": "Biohazard Armor 3p", "pieces": ["chestplate", "leggings", "boots"]},
-      {"hex": "EDAA36", "name": "Pumpkin Armor", "pieces": ["helmet", "chestplate", "leggings", "boots"]},
       {"hex": "00FF00", "name": "Cactus Armor", "pieces": ["helmet", "chestplate", "leggings", "boots"]},
       {"hex": "CC5500", "name": "Farmers Boots", "pieces": ["boots"]},
       {"hex": "000000", "name": "Ranchers", "pieces": ["boots"]}

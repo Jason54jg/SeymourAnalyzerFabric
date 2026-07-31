@@ -60,6 +60,9 @@ public class ClothConfig {
     private boolean showHighCustoms = false;
     @Getter
     @Setter
+    private boolean showHighFakes = true;
+    @Getter
+    @Setter
     private boolean threePieceSetsEnabled = true;
     @Getter
     @Setter
@@ -157,6 +160,7 @@ public class ClothConfig {
                 if (json.has("dupesEnabled")) dupesEnabled = json.get("dupesEnabled").getAsBoolean();
                 if (json.has("showHighFades")) showHighFades = json.get("showHighFades").getAsBoolean();
                 if (json.has("showHighCustoms")) showHighCustoms = json.get("showHighCustoms").getAsBoolean();
+                if (json.has("showHighFakes")) showHighFakes = json.get("showHighFakes").getAsBoolean();
                 if (json.has("itemFramesEnabled")) itemFramesEnabled = json.get("itemFramesEnabled").getAsBoolean();
                 if (json.has("scanOnlyOwnIsland")) scanOnlyOwnIsland = json.get("scanOnlyOwnIsland").getAsBoolean();
                 if (json.has("coloredHexText")) coloredHexText = json.get("coloredHexText").getAsBoolean();
@@ -242,6 +246,7 @@ public class ClothConfig {
             json.addProperty("dupesEnabled", dupesEnabled);
             json.addProperty("showHighFades", showHighFades);
             json.addProperty("showHighCustoms", showHighCustoms);
+            json.addProperty("showHighFakes", showHighFakes);
             json.addProperty("itemFramesEnabled", itemFramesEnabled);
             json.addProperty("scanOnlyOwnIsland", scanOnlyOwnIsland);
             json.addProperty("seymourOnlyHex", seymourOnlyHex);

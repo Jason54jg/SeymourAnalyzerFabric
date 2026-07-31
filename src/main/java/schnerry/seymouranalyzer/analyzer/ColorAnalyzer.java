@@ -92,6 +92,14 @@ public class ColorAnalyzer {
         allMatches.addAll(normalMatches.stream().limit(5).toList());
         allMatches.addAll(fadeMatches.stream().limit(5).toList());
 
+        // Apply high fake filtering - only show T0/T1 fake matches (deltaE <= 2.0) when disabled
+        // (only relevant when pieceSpecificEnabled is false, since fakes are hard-excluded otherwise)
+        if (!config.isShowHighFakes()) {
+            allMatches = allMatches.stream()
+                .filter(m -> !m.isFake() || m.deltaE <= 2.0)
+                .collect(Collectors.toList());
+        }
+
         // Step 1: Sort all selected matches by deltaE
         allMatches.sort(Comparator.comparingDouble(m -> m.deltaE));
 
@@ -238,8 +246,11 @@ public class ColorAnalyzer {
             String colorName = entry.getKey();
             String targetHex = entry.getValue();
 
-            // Piece-specific filtering
-            if (config.isPieceSpecificEnabled() && !canMatchPiece(colorName, pieceType)) {
+            // Determine if this match is a "fake" (piece-specific color matched against the wrong slot)
+            boolean isFake = pieceType != null && !canMatchPiece(colorName, pieceType);
+
+            // Piece-specific filtering: when enabled, hard-exclude fake matches
+            if (config.isPieceSpecificEnabled() && isFake) {
                 continue;
             }
 
@@ -257,7 +268,7 @@ public class ColorAnalyzer {
             int absoluteDist = ColorMath.calculateAbsoluteDistance(itemHex, targetHex);
             int tier = calculateTier(deltaE, isCustom, isFade);
 
-            ColorMatch match = new ColorMatch(colorName, targetHex, deltaE, absoluteDist, tier, isCustom, isFade);
+            ColorMatch match = new ColorMatch(colorName, targetHex, deltaE, absoluteDist, tier, isCustom, isFade, isFake);
             matches.add(match);
         }
 
@@ -331,7 +342,7 @@ public class ColorAnalyzer {
     }
 
     public record ColorMatch(String name, String targetHex, double deltaE, int absoluteDistance, int tier,
-                             boolean isCustom, boolean isFade) {
+                             boolean isCustom, boolean isFade, boolean isFake) {
     }
 }
 

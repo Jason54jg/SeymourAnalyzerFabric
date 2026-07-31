@@ -303,6 +303,12 @@ public class SeymourCommand {
                     (config.isShowHighFades() ? "§aenabled" : "§cdisabled") + "§7!"));
                 ctx.getSource().sendFeedback(Component.literal("§7When disabled, only T0/T1 fade matches (ΔE ≤ 2.0) will show"));
                 break;
+            case "highfakes":
+                config.setShowHighFakes(!config.isShowHighFakes());
+                ctx.getSource().sendFeedback(Component.literal("§a[Seymour Analyzer] §7High fake piece matches (T2+) " +
+                    (config.isShowHighFakes() ? "§aenabled" : "§cdisabled") + "§7!"));
+                ctx.getSource().sendFeedback(Component.literal("§7When disabled, only T0/T1 fake piece matches (ΔE ≤ 2.0) will show"));
+                break;
             case "itemframes":
                 config.setItemFramesEnabled(!config.isItemFramesEnabled());
                 ctx.getSource().sendFeedback(Component.literal("§a[Seymour Analyzer] §7Item frame scanning " +
@@ -370,6 +376,7 @@ public class SeymourCommand {
         ctx.getSource().sendFeedback(Component.literal("  §ecustom §8- " + getToggleIndicator(config.isCustomColorsEnabled()) + " §7Toggle custom colors"));
         ctx.getSource().sendFeedback(Component.literal("  §edupes §8- " + getToggleIndicator(config.isDupesEnabled()) + " §7Toggle dupe highlights"));
         ctx.getSource().sendFeedback(Component.literal("  §ehighfades §8- " + getToggleIndicator(config.isShowHighFades()) + " §7Toggle high fade matches (T2+)"));
+        ctx.getSource().sendFeedback(Component.literal("  §ehighfakes §8- " + getToggleIndicator(config.isShowHighFakes()) + " §7Toggle high fake piece matches (T2+, wrong-slot piece-specific colors)"));
         ctx.getSource().sendFeedback(Component.literal("  §eitemframes §8- " + getToggleIndicator(config.isItemFramesEnabled()) + " §7Toggle item frame scanning"));
         ctx.getSource().sendFeedback(Component.literal("  §escanonlyownisland §8- " + getToggleIndicator(config.isScanOnlyOwnIsland()) + " §7Toggle scanning on other islands"));
         ctx.getSource().sendFeedback(Component.literal("  §ehextooltip §8- " + getToggleIndicator(schnerry.seymouranalyzer.render.HexTooltipRenderer.getInstance().isEnabled()) + " §7Toggle hex tooltip display"));
