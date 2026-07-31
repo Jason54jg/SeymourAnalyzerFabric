@@ -322,7 +322,7 @@ public class BestSetsScreen extends ModScreen {
             // Open database with hex search
             DatabaseScreen dbScreen = new DatabaseScreen(this);
             dbScreen.setHexSearch(contextMenu.hex);
-            this.minecraft.setScreen(dbScreen);
+            this.minecraft.gui.setScreen(dbScreen);
             return true;
         }
 

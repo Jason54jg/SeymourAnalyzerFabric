@@ -59,10 +59,10 @@ public class VisitorChatListener {
         if (piece != null) {
             SeymourAnalyzer.LOGGER.info("[Gambling] Rolling with piece: {} #{}",
                     piece.skyblockId, String.format("%06X", piece.rgb));
-            mc.setScreen(new GamblingScreen(piece.rgb, piece.item));
+            mc.gui.setScreen(new GamblingScreen(piece.rgb, piece.item));
         } else {
             SeymourAnalyzer.LOGGER.info("[Gambling] No Seymour piece found, random roll");
-            mc.setScreen(new GamblingScreen());
+            mc.gui.setScreen(new GamblingScreen());
         }
     }
 

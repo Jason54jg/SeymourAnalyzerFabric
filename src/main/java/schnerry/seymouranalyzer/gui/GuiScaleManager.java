@@ -59,7 +59,7 @@ public class GuiScaleManager {
         isModGuiOpen = false;
 
         // Check if we're still in a mod GUI (nested GUIs)
-        Screen currentScreen = client.screen;
+        Screen currentScreen = client.gui.screen();
         if (isModScreen(currentScreen)) {
             SeymourAnalyzer.LOGGER.info("[GuiScale] Still in mod GUI, keeping scale at 2");
             return;
@@ -93,7 +93,7 @@ public class GuiScaleManager {
         Minecraft client = Minecraft.getInstance();
         if (client == null || client.options == null) return;
 
-        Screen currentScreen = client.screen;
+        Screen currentScreen = client.gui.screen();
         boolean shouldBeModGui = isModScreen(currentScreen);
 
         // Debug logging
@@ -120,7 +120,7 @@ public class GuiScaleManager {
         Minecraft client = Minecraft.getInstance();
         if (client == null) return false;
 
-        return isModScreen(client.screen);
+        return isModScreen(client.gui.screen());
     }
 
     /**

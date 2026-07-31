@@ -1,13 +1,9 @@
 package schnerry.seymouranalyzer.render;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,72 +64,26 @@ public class BlockHighlighter {
     }
 
     /**
-     * Called by DebugRendererMixin to render block highlights.
+     * Emits block highlights through Minecraft 26.2's Gizmo pipeline.
      */
-    public void renderHighlights(PoseStack poseStack, MultiBufferSource vertexConsumers, Vec3 cameraPos) {
+    public void emitHighlights() {
         if (highlightedBlocks.isEmpty()) return;
 
         Minecraft client = Minecraft.getInstance();
         if (client.level == null) return;
 
+        GizmoStyle style = GizmoStyle.strokeAndFill(toArgb(a), 2.0f, toArgb(a * 0.25f));
         for (BlockPos pos : highlightedBlocks) {
-            // Calculate camera-relative coordinates for a 1x1x1 block
-            float x1 = (float)(pos.getX() - cameraPos.x);
-            float y1 = (float)(pos.getY() - cameraPos.y);
-            float z1 = (float)(pos.getZ() - cameraPos.z);
-            float x2 = x1 + 1.0f;
-            float y2 = y1 + 1.0f;
-            float z2 = z1 + 1.0f;
-
-            drawBoxOutline(poseStack, vertexConsumers, x1, y1, z1, x2, y2, z2, r, g, b, a);
+            // Do not force always-on-top so highlights obey depth and occlusion.
+            Gizmos.cuboid(pos, style);
         }
     }
 
-    /**
-     * Draws a box outline using lines.
-     */
-    private void drawBoxOutline(PoseStack poseStack, MultiBufferSource vertexConsumers,
-                                 float x1, float y1, float z1, float x2, float y2, float z2,
-                                 float r, float g, float b, float a) {
-        VertexConsumer lines = vertexConsumers.getBuffer(RenderTypes.lines());
-        Matrix4f matrix = poseStack.last().pose();
-
-        // Bottom face edges
-        drawLine(lines, matrix, x1, y1, z1, x2, y1, z1, r, g, b, a);
-        drawLine(lines, matrix, x2, y1, z1, x2, y1, z2, r, g, b, a);
-        drawLine(lines, matrix, x2, y1, z2, x1, y1, z2, r, g, b, a);
-        drawLine(lines, matrix, x1, y1, z2, x1, y1, z1, r, g, b, a);
-
-        // Top face edges
-        drawLine(lines, matrix, x1, y2, z1, x2, y2, z1, r, g, b, a);
-        drawLine(lines, matrix, x2, y2, z1, x2, y2, z2, r, g, b, a);
-        drawLine(lines, matrix, x2, y2, z2, x1, y2, z2, r, g, b, a);
-        drawLine(lines, matrix, x1, y2, z2, x1, y2, z1, r, g, b, a);
-
-        // Vertical edges
-        drawLine(lines, matrix, x1, y1, z1, x1, y2, z1, r, g, b, a);
-        drawLine(lines, matrix, x2, y1, z1, x2, y2, z1, r, g, b, a);
-        drawLine(lines, matrix, x2, y1, z2, x2, y2, z2, r, g, b, a);
-        drawLine(lines, matrix, x1, y1, z2, x1, y2, z2, r, g, b, a);
-    }
-
-    /**
-     * Draws a single line segment.
-     */
-    private void drawLine(VertexConsumer consumer, Matrix4f matrix,
-                          float x1, float y1, float z1, float x2, float y2, float z2,
-                          float r, float g, float b, float a) {
-        // Calculate normal for the line (direction)
-        float dx = x2 - x1;
-        float dy = y2 - y1;
-        float dz = z2 - z1;
-        float len = (float)Math.sqrt(dx*dx + dy*dy + dz*dz);
-        if (len < 0.0001f) len = 1.0f;
-        float nx = dx / len;
-        float ny = dy / len;
-        float nz = dz / len;
-
-        consumer.addVertex(matrix, x1, y1, z1).setColor(r, g, b, a).setNormal(nx, ny, nz).setLineWidth(2.0f);
-        consumer.addVertex(matrix, x2, y2, z2).setColor(r, g, b, a).setNormal(nx, ny, nz).setLineWidth(2.0f);
+    private int toArgb(float alpha) {
+        int alphaChannel = Math.clamp(Math.round(alpha * 255.0f), 0, 255);
+        int redChannel = Math.clamp(Math.round(r * 255.0f), 0, 255);
+        int greenChannel = Math.clamp(Math.round(g * 255.0f), 0, 255);
+        int blueChannel = Math.clamp(Math.round(b * 255.0f), 0, 255);
+        return (alphaChannel << 24) | (redChannel << 16) | (greenChannel << 8) | blueChannel;
     }
 }

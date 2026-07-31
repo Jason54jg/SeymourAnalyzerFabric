@@ -184,7 +184,7 @@ public class ChestScanner {
         //                         the player happens to be looking at a block while they're open.
         //   2. Storage-block check – hitResult must point at a real chest/barrel/shulker,
         //                            which reliably excludes NPC shops, trade menus, etc.
-        if (client.screen instanceof AbstractContainerScreen<?> screen) {
+        if (client.gui.screen() instanceof AbstractContainerScreen<?> screen) {
             String title = screen.getTitle().getString();
             boolean isKnownNonChestScreen = title.contains("Auctions")
                 || title.startsWith("Trading with ")
@@ -199,7 +199,7 @@ public class ChestScanner {
         if (!scanningEnabled && !exportingEnabled) return;
 
         // ── Scan / export ─────────────────────────────────────────────────────
-        if (client.screen instanceof AbstractContainerScreen<?> screen) {
+        if (client.gui.screen() instanceof AbstractContainerScreen<?> screen) {
             // New chest opened (different screen object) – flush the previous batch first
             if (pendingBatchScreen != null && pendingBatchScreen != screen) {
                 flushChestBatch(client);

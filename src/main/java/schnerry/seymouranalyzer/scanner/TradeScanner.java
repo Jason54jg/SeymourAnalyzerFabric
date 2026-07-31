@@ -94,7 +94,7 @@ public class TradeScanner {
     public void tick(Minecraft mc) {
         if (mc.player == null) return;
 
-        if (mc.screen instanceof AbstractContainerScreen<?> screen) {
+        if (mc.gui.screen() instanceof AbstractContainerScreen<?> screen) {
             String title = screen.getTitle().getString();
             // Strip Minecraft formatting codes (§X) for reliable matching
             String cleanTitle = title.replaceAll("§.", "");
@@ -277,7 +277,7 @@ public class TradeScanner {
         }
         completionPending = true;
         // Do a final scan right now so data is fresh
-        if (mc.screen instanceof AbstractContainerScreen<?> screen) {
+        if (mc.gui.screen() instanceof AbstractContainerScreen<?> screen) {
             String cleanTitle = screen.getTitle().getString().replaceAll("§.", "");
             if (cleanTitle.contains(TRADE_TITLE_PREFIX.trim()) || isHypixelTradeTitle(cleanTitle)) {
             scanTradeSlots(mc, screen);

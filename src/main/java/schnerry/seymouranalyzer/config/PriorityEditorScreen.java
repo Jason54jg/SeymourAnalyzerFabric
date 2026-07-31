@@ -180,7 +180,7 @@ public class PriorityEditorScreen extends ModScreen {
                         click.y() >= swatchY && click.y() <= swatchY + SWATCH_SIZE) {
                         // Open color picker for this priority
                         if (this.minecraft != null) {
-                            this.minecraft.setScreen(new ColorPickerScreen(this, priorities.get(i)));
+                            this.minecraft.gui.setScreen(new ColorPickerScreen(this, priorities.get(i)));
                         }
                         return true;
                     }

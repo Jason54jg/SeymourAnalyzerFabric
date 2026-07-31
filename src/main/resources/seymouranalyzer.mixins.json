@@ -5,6 +5,7 @@
 	"mixins": [
 	],
 	"client": [
+		"DebugRendererMixin",
 		"HandledScreenMixin",
 		"TooltipColorMixin"
 	],

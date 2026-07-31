@@ -243,7 +243,7 @@ public class DatabaseScreen extends ModScreen {
 
         // Checklist button (top left)
         Button checklistButton = Button.builder(Component.literal("Open Checklist GUI"),
-            button -> this.minecraft.setScreen(new ArmorChecklistScreen(this)))
+            button -> this.minecraft.gui.setScreen(new ArmorChecklistScreen(this)))
             .bounds(20, 10, 150, 20).build();
         this.addRenderableWidget(checklistButton);
 
@@ -260,13 +260,13 @@ public class DatabaseScreen extends ModScreen {
 
         // Word matches button (bottom right)
         Button wordButton = Button.builder(Component.literal("§lWord Matches"),
-            button -> this.minecraft.setScreen(new WordMatchesScreen(this)))
+            button -> this.minecraft.gui.setScreen(new WordMatchesScreen(this)))
             .bounds(this.width - 140, this.height - 60, 120, 20).build();
         this.addRenderableWidget(wordButton);
 
         // Pattern matches button (above word button)
         Button patternButton = Button.builder(Component.literal("§lPattern Matches"),
-            button -> this.minecraft.setScreen(new PatternMatchesScreen(this)))
+            button -> this.minecraft.gui.setScreen(new PatternMatchesScreen(this)))
             .bounds(this.width - 140, this.height - 35, 120, 20).build();
         this.addRenderableWidget(patternButton);
 
@@ -1488,7 +1488,7 @@ public class DatabaseScreen extends ModScreen {
     public void onClose() {
         if (rememberPosition) saveCurrentState();
         if (this.minecraft != null) {
-            this.minecraft.setScreen(parent);
+            this.minecraft.gui.setScreen(parent);
         }
     }
 

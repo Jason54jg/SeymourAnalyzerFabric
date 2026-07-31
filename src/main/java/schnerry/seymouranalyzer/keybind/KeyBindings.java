@@ -87,15 +87,15 @@ public class KeyBindings {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (isKeyMappingBound(openDatabaseGuiKey) && openDatabaseGuiKey.consumeClick()) {
-                client.setScreen(new DatabaseScreen(null));
+                client.gui.setScreen(new DatabaseScreen(null));
             }
 
             if (isKeyMappingBound(openConfigGuiKey) && openConfigGuiKey.consumeClick()) {
-                client.setScreen(ConfigScreen.createConfigScreen(client.screen));
+                client.gui.setScreen(ConfigScreen.createConfigScreen(client.gui.screen()));
             }
 
             if (isKeyMappingBound(openChecklistGuiKey) && openChecklistGuiKey.consumeClick()) {
-                client.setScreen(new ArmorChecklistScreen(null));
+                client.gui.setScreen(new ArmorChecklistScreen(null));
             }
         });
 
@@ -138,7 +138,7 @@ public class KeyBindings {
                             Minecraft mc = Minecraft.getInstance();
                             DatabaseScreen dbScreen = new DatabaseScreen(screen);
                             dbScreen.setInitialSearch(hex);
-                            mc.setScreen(dbScreen);
+                            mc.gui.setScreen(dbScreen);
                         }
                     }
                 );

@@ -58,6 +58,7 @@ public class SeymourCommand {
 
     public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher) {
         dispatcher.register(literal("seymour")
+            .requires(FabricClientCommandSource::attended)
             .executes(SeymourCommand::showHelp)
 
             // /seymour toggle <option>
@@ -938,7 +939,7 @@ public class SeymourCommand {
 
     private static int openDatabaseGUI(CommandContext<FabricClientCommandSource> ctx) {
         try {
-            runOnClientThread(() -> Minecraft.getInstance().setScreen(new DatabaseScreen(null)));
+            runOnClientThread(() -> Minecraft.getInstance().gui.setScreen(new DatabaseScreen(null)));
         } catch (Exception e) {
             ctx.getSource().sendError(Component.literal("§c[Seymour] §7Error: " + e.getMessage()));
             return reportCommandError(ctx, "opening database GUI", e);
@@ -948,7 +949,7 @@ public class SeymourCommand {
 
     private static int openChecklistGUI(CommandContext<FabricClientCommandSource> ctx) {
         try {
-            runOnClientThread(() -> Minecraft.getInstance().setScreen(new ArmorChecklistScreen(null)));
+            runOnClientThread(() -> Minecraft.getInstance().gui.setScreen(new ArmorChecklistScreen(null)));
             ctx.getSource().sendFeedback(Component.literal("§a[Seymour] §7Checklist GUI opened!"));
         } catch (Exception e) {
             ctx.getSource().sendError(Component.literal("§c[Seymour] §7Error: " + e.getMessage()));
@@ -959,7 +960,7 @@ public class SeymourCommand {
 
     private static int openBestSetsGUI(CommandContext<FabricClientCommandSource> ctx) {
         try {
-            runOnClientThread(() -> Minecraft.getInstance().setScreen(new BestSetsScreen(null)));
+            runOnClientThread(() -> Minecraft.getInstance().gui.setScreen(new BestSetsScreen(null)));
             ctx.getSource().sendFeedback(Component.literal("§a[Seymour] §7Best Sets GUI opened!"));
         } catch (Exception e) {
             ctx.getSource().sendError(Component.literal("§c[Seymour] §7Error: " + e.getMessage()));
@@ -970,7 +971,7 @@ public class SeymourCommand {
 
     private static int openWordMatchesGUI(CommandContext<FabricClientCommandSource> ctx) {
         try {
-            runOnClientThread(() -> Minecraft.getInstance().setScreen(new WordMatchesScreen(null)));
+            runOnClientThread(() -> Minecraft.getInstance().gui.setScreen(new WordMatchesScreen(null)));
             ctx.getSource().sendFeedback(Component.literal("§a[Seymour] §7Word Matches GUI opened!"));
         } catch (Exception e) {
             ctx.getSource().sendError(Component.literal("§c[Seymour] §7Error: " + e.getMessage()));
@@ -981,7 +982,7 @@ public class SeymourCommand {
 
     private static int openPatternMatchesGUI(CommandContext<FabricClientCommandSource> ctx) {
         try {
-            runOnClientThread(() -> Minecraft.getInstance().setScreen(new PatternMatchesScreen(null)));
+            runOnClientThread(() -> Minecraft.getInstance().gui.setScreen(new PatternMatchesScreen(null)));
             ctx.getSource().sendFeedback(Component.literal("§a[Seymour] §7Pattern Matches GUI opened!"));
         } catch (Exception e) {
             ctx.getSource().sendError(Component.literal("§c[Seymour] §7Error: " + e.getMessage()));
@@ -992,7 +993,7 @@ public class SeymourCommand {
 
     private static int openConfigGUI(CommandContext<FabricClientCommandSource> ctx) {
         try {
-            runOnClientThread(() -> Minecraft.getInstance().setScreen(
+            runOnClientThread(() -> Minecraft.getInstance().gui.setScreen(
                 ConfigScreen.createConfigScreen(null)
             ));
             ctx.getSource().sendFeedback(Component.literal("§a[Seymour] §7Config GUI opened!"));
@@ -1005,7 +1006,7 @@ public class SeymourCommand {
 
     private static int openPriorityEditorGUI(CommandContext<FabricClientCommandSource> ctx) {
         try {
-            runOnClientThread(() -> Minecraft.getInstance().setScreen(
+            runOnClientThread(() -> Minecraft.getInstance().gui.setScreen(
                 new PriorityEditorScreen(null)
             ));
             ctx.getSource().sendFeedback(Component.literal("§a[Seymour] §7Priority Editor opened!"));
@@ -1018,7 +1019,7 @@ public class SeymourCommand {
 
     private static int openRollScreen(CommandContext<FabricClientCommandSource> ctx) {
         try {
-            runOnClientThread(() -> Minecraft.getInstance().setScreen(
+            runOnClientThread(() -> Minecraft.getInstance().gui.setScreen(
                 new GamblingScreen()
             ));
             ctx.getSource().sendFeedback(Component.literal("§a[Seymour Analyzer] §7Rolling..."));
@@ -1528,7 +1529,7 @@ public class SeymourCommand {
                 Minecraft mc = Minecraft.getInstance();
                 DatabaseScreen screen = new DatabaseScreen(null);
                 screen.setHexSearch(hex);
-                mc.setScreen(screen);
+                mc.gui.setScreen(screen);
             });
         } catch (Exception e) {
             ctx.getSource().sendError(Component.literal("§c[Seymour] §7Error: " + e.getMessage()));
@@ -1547,7 +1548,7 @@ public class SeymourCommand {
                 Minecraft mc = Minecraft.getInstance();
                 DatabaseScreen screen = new DatabaseScreen(null);
                 screen.setInitialSearch(searchText);
-                mc.setScreen(screen);
+                mc.gui.setScreen(screen);
             });
         } catch (Exception e) {
             ctx.getSource().sendError(Component.literal("§c[Seymour] §7Error: " + e.getMessage()));

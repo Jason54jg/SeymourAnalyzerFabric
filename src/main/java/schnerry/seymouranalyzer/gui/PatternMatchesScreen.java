@@ -93,7 +93,7 @@ public class PatternMatchesScreen extends ModScreen {
 
         // Back button
         Button backBtn = Button.builder(Component.literal("← Back to Database"), button -> {
-            this.minecraft.setScreen(parent);
+            this.minecraft.gui.setScreen(parent);
         }).bounds(20, 10, 150, 20).build();
         this.addRenderableWidget(backBtn);
 
@@ -412,7 +412,7 @@ public class PatternMatchesScreen extends ModScreen {
                 if (minecraft != null) {
                     DatabaseScreen dbScreen = new DatabaseScreen();
                     dbScreen.setHexSearch(hex);
-                    minecraft.setScreen(dbScreen);
+                    minecraft.gui.setScreen(dbScreen);
                 }
                 return true;
             }
@@ -507,7 +507,7 @@ public class PatternMatchesScreen extends ModScreen {
     @Override
     public void onClose() {
         if (this.minecraft != null) {
-            this.minecraft.setScreen(parent);
+            this.minecraft.gui.setScreen(parent);
         }
     }
 

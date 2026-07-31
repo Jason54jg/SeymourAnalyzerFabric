@@ -63,7 +63,7 @@ public class ItemDebugger {
 
         try {
             Minecraft client = Minecraft.getInstance();
-            if (client.screen instanceof AbstractContainerScreen<?>) {
+            if (client.gui.screen() instanceof AbstractContainerScreen<?>) {
                 ItemStack stack = InfoBoxRenderer.getInstance().getLastHoveredStack();
 
                 if (stack != null && !stack.isEmpty()) {
@@ -222,7 +222,7 @@ public class ItemDebugger {
 
         try {
             Minecraft client = Minecraft.getInstance();
-            if (client.screen instanceof AbstractContainerScreen<?>) {
+            if (client.gui.screen() instanceof AbstractContainerScreen<?>) {
                 ItemStack stack = InfoBoxRenderer.getInstance().getLastHoveredStack();
 
                 if (stack != null && !stack.isEmpty()) {

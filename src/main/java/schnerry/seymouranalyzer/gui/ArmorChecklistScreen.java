@@ -579,7 +579,7 @@ public class ArmorChecklistScreen extends ModScreen {
 
         // Back to database button
         Button backBtn = Button.builder(Component.literal("← Back to Database"),
-            button -> this.minecraft.setScreen(parent))
+            button -> this.minecraft.gui.setScreen(parent))
             .bounds(20, 10, 150, 20).build();
         this.addRenderableWidget(backBtn);
 
@@ -1128,7 +1128,7 @@ public class ArmorChecklistScreen extends ModScreen {
                 DatabaseScreen dbScreen = new DatabaseScreen(this);
                 dbScreen.setHexSearch(hexToSearch);
                 if (minecraft != null) {
-                    minecraft.setScreen(dbScreen);
+                    minecraft.gui.setScreen(dbScreen);
                 }
             }
             contextMenu = null;
@@ -1272,7 +1272,7 @@ public class ArmorChecklistScreen extends ModScreen {
             savedFadeDyeMode = fadeDyeMode;
         }
         if (this.minecraft != null) {
-            this.minecraft.setScreen(parent);
+            this.minecraft.gui.setScreen(parent);
         }
     }
 
