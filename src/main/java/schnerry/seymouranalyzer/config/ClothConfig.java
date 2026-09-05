@@ -81,6 +81,11 @@ public class ClothConfig {
     @Getter
     @Setter
     private boolean dbCompareOnlyDiffPieces = false;
+    @Getter
+    @Setter
+    private boolean dbCompareCurrentProfileOnly = false;
+    @Getter
+    private DBCompareMode dbCompareMode = DBCompareMode.NORMAL;
 
     // Toggle settings - Gambling
     @Getter
@@ -91,6 +96,10 @@ public class ClothConfig {
     @Getter
     @Setter
     private boolean autoPinGui = false;
+
+    @Getter
+    @Setter
+    private boolean bestSetsUnderDeltaTwoOnly = false;
 
     // Toggle settings - Scanning
     @Getter
@@ -124,6 +133,10 @@ public class ClothConfig {
     private Map<String, String> customColors = new HashMap<>();
     @Getter
     private Map<String, String> wordList = new HashMap<>();
+    @Getter
+    private Map<String, String> profiles = new HashMap<>();
+    @Getter
+    private Map<String, String> customProfileNames = new HashMap<>();
 
     private ClothConfig() {
         configDir = new File(FabricLoader.getInstance().getConfigDir().toFile(), "seymouranalyzer");
@@ -166,8 +179,11 @@ public class ClothConfig {
                 if (json.has("coloredHexText")) coloredHexText = json.get("coloredHexText").getAsBoolean();
                 if (json.has("dbCompareEnabled")) dbCompareEnabled = json.get("dbCompareEnabled").getAsBoolean();
                 if (json.has("dbCompareOnlyDiffPieces")) dbCompareOnlyDiffPieces = json.get("dbCompareOnlyDiffPieces").getAsBoolean();
+                if (json.has("dbCompareCurrentProfileOnly")) dbCompareCurrentProfileOnly = json.get("dbCompareCurrentProfileOnly").getAsBoolean();
+                if (json.has("dbCompareMode")) dbCompareMode = parseDbCompareMode(json.get("dbCompareMode").getAsString());
                 if (json.has("autoRollOnVisitor")) autoRollOnVisitor = json.get("autoRollOnVisitor").getAsBoolean();
                 if (json.has("autoPinGui")) autoPinGui = json.get("autoPinGui").getAsBoolean();
+                if (json.has("bestSetsUnderDeltaTwoOnly")) bestSetsUnderDeltaTwoOnly = json.get("bestSetsUnderDeltaTwoOnly").getAsBoolean();
 
                 if (json.has("infoBoxX")) infoBoxX = json.get("infoBoxX").getAsInt();
                 if (json.has("infoBoxY")) infoBoxY = json.get("infoBoxY").getAsInt();
@@ -226,6 +242,20 @@ public class ClothConfig {
                         wordList.put(entry.getKey(), entry.getValue().getAsString());
                     });
                 }
+
+                if (json.has("profiles")) {
+                    JsonObject storedProfiles = json.getAsJsonObject("profiles");
+                    storedProfiles.entrySet().forEach(entry -> {
+                        profiles.put(entry.getKey(), entry.getValue().getAsString());
+                    });
+                }
+
+                if (json.has("customProfileNames")) {
+                    JsonObject storedNames = json.getAsJsonObject("customProfileNames");
+                    storedNames.entrySet().forEach(entry -> {
+                        customProfileNames.put(entry.getKey(), entry.getValue().getAsString());
+                    });
+                }
             }
         } catch (Exception e) {
             SeymourAnalyzer.LOGGER.error("Failed to load data", e);
@@ -253,8 +283,11 @@ public class ClothConfig {
             json.addProperty("coloredHexText", coloredHexText);
             json.addProperty("dbCompareEnabled", dbCompareEnabled);
             json.addProperty("dbCompareOnlyDiffPieces", dbCompareOnlyDiffPieces);
+            json.addProperty("dbCompareCurrentProfileOnly", dbCompareCurrentProfileOnly);
+            json.addProperty("dbCompareMode", dbCompareMode.name().toLowerCase(Locale.ROOT));
             json.addProperty("autoRollOnVisitor", autoRollOnVisitor);
             json.addProperty("autoPinGui", autoPinGui);
+            json.addProperty("bestSetsUnderDeltaTwoOnly", bestSetsUnderDeltaTwoOnly);
 
             json.addProperty("infoBoxX", infoBoxX);
             json.addProperty("infoBoxY", infoBoxY);
@@ -290,11 +323,39 @@ public class ClothConfig {
             wordList.forEach(words::addProperty);
             json.add("wordList", words);
 
+            JsonObject storedProfiles = new JsonObject();
+            profiles.forEach(storedProfiles::addProperty);
+            json.add("profiles", storedProfiles);
+
+            JsonObject storedNames = new JsonObject();
+            customProfileNames.forEach(storedNames::addProperty);
+            json.add("customProfileNames", storedNames);
+
             try (FileWriter writer = new FileWriter(dataFile)) {
                 GSON.toJson(json, writer);
             }
         } catch (Exception e) {
             SeymourAnalyzer.LOGGER.error("Failed to save data", e);
+        }
+    }
+
+    public void putProfile(String profileId, String profileName) {
+        if (profileId == null || profileId.isBlank() || profileName == null || profileName.isBlank()) return;
+        if (!profileName.equals(profiles.get(profileId))) {
+            profiles.put(profileId, profileName);
+            saveData();
+        }
+    }
+
+    public void setCustomProfileName(String profileId, String customName) {
+        if (profileId == null || profileId.isBlank() || customName == null || customName.isBlank()) return;
+        customProfileNames.put(profileId, customName);
+        saveData();
+    }
+
+    public void clearCustomProfileName(String profileId) {
+        if (profileId != null && customProfileNames.remove(profileId) != null) {
+            saveData();
         }
     }
 
@@ -357,5 +418,20 @@ public class ClothConfig {
             MatchPriority.FADE_T1,
             MatchPriority.FADE_T2
         );
+    }
+
+    private static DBCompareMode parseDbCompareMode(String mode) {
+        if (mode == null) return DBCompareMode.NORMAL;
+        return switch (mode.toLowerCase(Locale.ROOT)) {
+            case "different" -> DBCompareMode.DIFFERENT;
+            case "unique" -> DBCompareMode.UNIQUE;
+            default -> DBCompareMode.NORMAL;
+        };
+    }
+
+    public void setDbCompareMode(DBCompareMode mode) {
+        this.dbCompareMode = mode != null ? mode : DBCompareMode.NORMAL;
+        // Keep legacy toggle behavior in sync with mode selection
+        this.dbCompareOnlyDiffPieces = this.dbCompareMode == DBCompareMode.DIFFERENT;
     }
 }

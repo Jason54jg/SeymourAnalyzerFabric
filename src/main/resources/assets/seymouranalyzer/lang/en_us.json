@@ -5,5 +5,6 @@
   "key.seymouranalyzer.copypiece": "Copy Hovered Piece Hex",
   "key.seymouranalyzer.openpieceindb": "Open Hovered Piece Hex in Database",
   "key.seymouranalyzer.debugcapture": "Debug: Capture Hovered Item",
-  "key.category.seymouranalyzer.main": "Seymour Analyzer"
+  "key.category.seymouranalyzer.main": "Seymour Analyzer",
+  "key.seymouranalyzer.highlightchestspace": "Highlight Chest Space"
 }

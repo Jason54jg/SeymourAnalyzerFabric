@@ -6,10 +6,12 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import schnerry.seymouranalyzer.SeymourAnalyzer;
+import schnerry.seymouranalyzer.config.ClothConfig;
 import schnerry.seymouranalyzer.data.ArmorPiece;
 import schnerry.seymouranalyzer.data.CollectionManager;
 import schnerry.seymouranalyzer.util.ColorMath;
 import schnerry.seymouranalyzer.util.PieceTypeUtil;
+import schnerry.seymouranalyzer.util.SkyBlockProfileTracker;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -32,11 +34,17 @@ public class BestSetsScreen extends ModScreen {
     private int calculationProgress = 0;
     private int scrollOffset = 0;
     private ContextMenu contextMenu = null;
+    private String selectedProfileId = SkyBlockProfileTracker.ALL_PROFILES;
+    private boolean profileDropdownOpen;
+    private boolean profileSelected;
+    private boolean hasCalculated;
 
     // Static cache to persist results across GUI opens/closes
     private static List<ArmorSet> cachedBestSets = null;
     private static int cachedCollectionSize = -1;
     private static long cacheTimestamp = 0;
+    private static boolean cachedUnderDeltaTwoOnly;
+    private static String cachedProfileId;
 
     private static final int MAX_SETS = 100;
     private static final double MAX_DELTA_E = 5.0;
@@ -53,6 +61,8 @@ public class BestSetsScreen extends ModScreen {
 
         if (cachedBestSets != null &&
             cachedCollectionSize == currentSize &&
+            cachedUnderDeltaTwoOnly == ClothConfig.getInstance().isBestSetsUnderDeltaTwoOnly() &&
+            Objects.equals(cachedProfileId, selectedProfileId) &&
             (currentTime - cacheTimestamp) < CACHE_VALIDITY_MS) {
             bestSets = new ArrayList<>(cachedBestSets);
             SeymourAnalyzer.LOGGER.info("[Best Sets] Loaded {} sets from cache", bestSets.size());
@@ -65,26 +75,55 @@ public class BestSetsScreen extends ModScreen {
 
         // Calculate button - updates text based on isCalculating state
         Button calculateButton = Button.builder(
-            Component.literal(isCalculating ? "§7Calculating..." : "§aCalculate Best Sets"),
+            Component.literal(!profileSelected ? "§7Select Profile First"
+                : isCalculating ? "§7Calculating..." : "§aCalculate Best Sets"),
             button -> {
-                if (!isCalculating) {
+                if (profileSelected && !isCalculating) {
                     calculateBestSets();
                 }
             })
             .bounds(this.width / 2 - 75, 40, 150, 25)
             .build();
-        calculateButton.active = !isCalculating; // Disable button while calculating
+        calculateButton.active = profileSelected && !isCalculating;
         this.addRenderableWidget(calculateButton);
+
+        Button profileSelector = Button.builder(
+            Component.literal("Profile: " + SkyBlockProfileTracker.getProfileLabel(selectedProfileId)),
+            button -> {
+                profileDropdownOpen = !profileDropdownOpen;
+                this.rebuildWidgets();
+            })
+            .bounds(20, 40, 145, 25)
+            .build();
+        this.addRenderableWidget(profileSelector);
+        if (profileDropdownOpen) {
+            for (Button option : ProfileDropdown.createOptions(20, 65, 145, selectedProfileId, profileId -> {
+                selectedProfileId = profileId;
+                profileDropdownOpen = false;
+                profileSelected = true;
+                bestSets.clear();
+                scrollOffset = 0;
+                hasCalculated = false;
+                this.rebuildWidgets();
+            })) {
+                this.addRenderableWidget(option);
+            }
+        }
     }
 
     @Override
     public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
-        super.render(guiGraphics, mouseX, mouseY, delta);
-
         // Title
         String title = "§l§nBest Matching Sets";
         int titleWidth = this.font.width(title);
         guiGraphics.text(this.font, title, this.width / 2 - titleWidth / 2, 10, 0xFFFFFFFF);
+
+        boolean underDeltaTwoOnly = ClothConfig.getInstance().isBestSetsUnderDeltaTwoOnly();
+        String modeText = underDeltaTwoOnly
+            ? "§aMode: Average ΔE < 2.0"
+            : "§7Mode: Top 100 sets";
+        int modeWidth = this.font.width(modeText);
+        guiGraphics.text(this.font, modeText, this.width / 2 - modeWidth / 2, 24, 0xFFFFFFFF);
 
         // Progress bar
         if (isCalculating && calculationProgress > 0) {
@@ -114,15 +153,23 @@ public class BestSetsScreen extends ModScreen {
 
         // Draw sets or instructions
         if (bestSets.isEmpty() && !isCalculating) {
-            String line1 = "§7Click button to calculate best matching sets";
-            String line2 = "§7This will find 4-piece sets with lowest color difference";
-            String line3 = "§7Each piece is used only ONCE across all sets";
+            if (hasCalculated) {
+                String noSetsMessage = "§7No optimal sets found for the selected profile";
+                guiGraphics.text(this.font, noSetsMessage, this.width / 2 - this.font.width(noSetsMessage) / 2,
+                    110, 0xFF888888);
+            } else {
+                String line1 = "§7Click button to calculate best matching sets";
+                String line2 = "§7This will find 4-piece sets with lowest color difference";
+                String line3 = "§7Each piece is used only ONCE across all sets";
 
-            guiGraphics.text(this.font, line1, this.width / 2 - this.font.width(line1) / 2, 100, 0xFF888888);
-            guiGraphics.text(this.font, line2, this.width / 2 - this.font.width(line2) / 2, 115, 0xFF888888);
-            guiGraphics.text(this.font, line3, this.width / 2 - this.font.width(line3) / 2, 130, 0xFF888888);
+                guiGraphics.text(this.font, line1, this.width / 2 - this.font.width(line1) / 2, 100, 0xFF888888);
+                guiGraphics.text(this.font, line2, this.width / 2 - this.font.width(line2) / 2, 115, 0xFF888888);
+                guiGraphics.text(this.font, line3, this.width / 2 - this.font.width(line3) / 2, 130, 0xFF888888);
+            }
         } else if (!bestSets.isEmpty()) {
-            String setsInfo = "§7Top " + bestSets.size() + " sets (ΔE ≤ " + MAX_DELTA_E + ") - Each piece used once";
+            String setsInfo = underDeltaTwoOnly
+                ? "§7" + bestSets.size() + " sets with average ΔE < 2.0 - Each piece used once"
+                : "§7Top " + bestSets.size() + " sets (ΔE ≤ " + MAX_DELTA_E + ") - Each piece used once";
             guiGraphics.text(this.font, setsInfo, 20, START_Y - 10, 0xFF888888);
 
             // Draw visible sets
@@ -146,6 +193,11 @@ public class BestSetsScreen extends ModScreen {
         // Draw context menu
         if (contextMenu != null) {
             drawContextMenu(guiGraphics, mouseX, mouseY);
+        }
+
+        super.render(guiGraphics, mouseX, mouseY, delta);
+        if (profileDropdownOpen) {
+            ProfileDropdown.renderModal(guiGraphics, this.font, this.width, this.height, 20, 40, 145, 25, selectedProfileId);
         }
     }
 
@@ -234,6 +286,21 @@ public class BestSetsScreen extends ModScreen {
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
+
+        if (profileDropdownOpen) {
+            if (button == 0) {
+                ProfileDropdown.getSelectedOption(mouseX, mouseY, 20, 40, 145, 25).ifPresent(profileId -> {
+                    selectedProfileId = profileId;
+                    profileSelected = true;
+                    bestSets.clear();
+                    scrollOffset = 0;
+                    hasCalculated = false;
+                });
+            }
+            profileDropdownOpen = false;
+            this.rebuildWidgets();
+            return true;
+        }
 
         // Handle guiGraphics menu
         if (contextMenu != null) {
@@ -347,6 +414,7 @@ public class BestSetsScreen extends ModScreen {
         isCalculating = true;
         calculationProgress = 0;
         bestSets.clear();
+        hasCalculated = false;
 
         // Re-init to update button state
         this.minecraft.execute(this::init);
@@ -372,6 +440,11 @@ public class BestSetsScreen extends ModScreen {
 
         // Categorize pieces by type
         Map<String, ArmorPiece> collection = CollectionManager.getInstance().getCollection();
+        if (!SkyBlockProfileTracker.ALL_PROFILES.equals(selectedProfileId)) {
+            collection = collection.entrySet().stream()
+                .filter(entry -> selectedProfileId.equals(entry.getValue().getProfileId()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        }
 
         List<PieceWithLab> helmets = new ArrayList<>();
         List<PieceWithLab> chestplates = new ArrayList<>();
@@ -512,9 +585,15 @@ public class BestSetsScreen extends ModScreen {
         // Select the best non-overlapping sets (greedy selection from sorted list)
         List<ArmorSet> selectedSets = new ArrayList<>();
         Set<String> usedUuids = new HashSet<>();
+        boolean underDeltaTwoOnly = ClothConfig.getInstance().isBestSetsUnderDeltaTwoOnly();
 
         for (ArmorSet set : allValidSets) {
-            if (selectedSets.size() >= MAX_SETS) break;
+            if (underDeltaTwoOnly && set.avgDeltaE >= 2.0) {
+                continue;
+            }
+            if (!underDeltaTwoOnly && selectedSets.size() >= MAX_SETS) {
+                break;
+            }
 
             // Check if any piece in this set is already used
             if (usedUuids.contains(set.helmet.getUuid()) ||
@@ -535,11 +614,14 @@ public class BestSetsScreen extends ModScreen {
         calculationProgress = 95;
 
         bestSets = selectedSets;
+        hasCalculated = true;
 
         // Save to cache
-        cachedBestSets = new ArrayList<>(selectedSets);
+        cachedBestSets = new ArrayList<>(bestSets);
         cachedCollectionSize = collection.size();
         cacheTimestamp = System.currentTimeMillis();
+        cachedUnderDeltaTwoOnly = ClothConfig.getInstance().isBestSetsUnderDeltaTwoOnly();
+        cachedProfileId = selectedProfileId;
 
         long endTime = System.currentTimeMillis();
         long totalTimeMs = endTime - startTime;

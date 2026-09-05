@@ -10,6 +10,7 @@ import schnerry.seymouranalyzer.SeymourAnalyzerClient;
 import schnerry.seymouranalyzer.gui.GuiScaleManager;
 import schnerry.seymouranalyzer.render.HexTooltipRenderer;
 import schnerry.seymouranalyzer.scanner.ChestScanner;
+import schnerry.seymouranalyzer.util.SkyBlockProfileTracker;
 
 import java.io.File;
 import java.io.FileReader;
@@ -216,6 +217,9 @@ public class CollectionManager {
         if (piece.getUuid() == null) {
             piece.setUuid(UUID.randomUUID().toString());
         }
+        if (piece.getProfileId() == null || piece.getProfileId().isBlank()) {
+            SkyBlockProfileTracker.getActiveProfileId().ifPresent(piece::setProfileId);
+        }
         collection.put(piece.getUuid(), piece);
         HexTooltipRenderer.getInstance().clearDbCache();
         schnerry.seymouranalyzer.render.InfoBoxRenderer.invalidateOwnedDeltaCache();
@@ -268,4 +272,3 @@ public class CollectionManager {
         return collection.size();
     }
 }
-

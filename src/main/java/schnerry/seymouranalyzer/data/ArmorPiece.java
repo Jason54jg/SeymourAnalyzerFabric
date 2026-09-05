@@ -20,6 +20,7 @@ public class ArmorPiece {
     private String wordMatch;
     private String specialPattern;
     private long timestamp; // Hypixel Skyblock timestamp
+    private String profileId;
 
     // Transient fields for hex search (not serialized)
     private transient String cachedSearchHex;

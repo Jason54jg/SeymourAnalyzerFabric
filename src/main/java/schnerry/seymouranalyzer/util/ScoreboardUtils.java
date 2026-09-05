@@ -69,11 +69,10 @@ public class ScoreboardUtils {
     private static String stripFormatting(String text) {
         if (text == null) return "";
         return text
-                // Standard § format codes
-                .replaceAll("§[0-9a-fk-orA-FK-OR]", "")
+                // Hypixel may use non-standard § codes in its hidden scoreboard entry names.
+                .replaceAll("§.", "")
                 // Mojangson / UTF-8-mangled variant (Â§ artefact)
-                .replaceAll("Â§[0-9a-fk-orA-FK-OR]", "")
+                .replaceAll("Â§.", "")
                 .trim();
     }
 }
-

@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import schnerry.seymouranalyzer.render.BlockHighlighter;
+import schnerry.seymouranalyzer.render.ChestSpaceHighlighter;
 
 /**
  * DebugRendererMixin for 1.21.10
@@ -33,9 +34,14 @@ public class DebugRendererMixin {
             CallbackInfo ci
     ) {
         BlockHighlighter highlighter = BlockHighlighter.getInstance();
-        if (!highlighter.hasHighlights()) return;
+        if (highlighter.hasHighlights()) {
+            highlighter.emitHighlights();
+        }
 
-        highlighter.emitHighlights();
+        ChestSpaceHighlighter chestSpaceHighlighter = ChestSpaceHighlighter.getInstance();
+        if (chestSpaceHighlighter.getHighlightCount() > 0) {
+            chestSpaceHighlighter.emitHighlights();
+        }
     }
 }
 

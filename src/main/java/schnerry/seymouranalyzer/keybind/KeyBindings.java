@@ -12,6 +12,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.resources.Identifier;
 import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
+import schnerry.seymouranalyzer.SeymourAnalyzer;
 import schnerry.seymouranalyzer.command.SeymourCommand;
 import schnerry.seymouranalyzer.config.ConfigScreen;
 import schnerry.seymouranalyzer.debug.ItemDebugger;
@@ -19,6 +20,7 @@ import schnerry.seymouranalyzer.gui.ArmorChecklistScreen;
 import schnerry.seymouranalyzer.gui.DatabaseScreen;
 import schnerry.seymouranalyzer.render.InfoBoxRenderer;
 import schnerry.seymouranalyzer.render.ItemSlotHighlighter;
+import schnerry.seymouranalyzer.scanner.ChestSpaceTracker;
 import schnerry.seymouranalyzer.util.ItemStackUtils;
 
 /**
@@ -35,6 +37,7 @@ public class KeyBindings {
     private static KeyMapping debugCaptureKey;
     private static KeyMapping copyPieceKey;
     private static KeyMapping openPieceInDBKey;
+    private static KeyMapping highlightChestSpaceKey;
 
     public static void register() {
         // O for Database GUI
@@ -85,6 +88,14 @@ public class KeyBindings {
             SEYMOURANALYZER_CATEGORY
         ));
 
+        // No default key for chest space highlight (configurable in keybind settings)
+        highlightChestSpaceKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.seymouranalyzer.highlightchestspace",
+            InputConstants.Type.KEYSYM,
+            InputConstants.UNKNOWN.getValue(),
+            SEYMOURANALYZER_CATEGORY
+        ));
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (isKeyMappingBound(openDatabaseGuiKey) && openDatabaseGuiKey.consumeClick()) {
                 client.gui.setScreen(new DatabaseScreen(null));
@@ -96,6 +107,19 @@ public class KeyBindings {
 
             if (isKeyMappingBound(openChecklistGuiKey) && openChecklistGuiKey.consumeClick()) {
                 client.gui.setScreen(new ArmorChecklistScreen(null));
+            }
+
+            if (isKeyMappingBound(highlightChestSpaceKey) && highlightChestSpaceKey.consumeClick()) {
+                ChestSpaceTracker.getInstance().toggleHighlight();
+                if (client.player != null) {
+                    client.player.sendSystemMessage(
+                        net.minecraft.network.chat.Component.literal(
+                            ChestSpaceTracker.getInstance().isHighlightEnabled()
+                                ? "§a[Seymour] Chest Space Highlight §aON"
+                                : "§c[Seymour] Chest Space Highlight §cOFF"
+                        )
+                    );
+                }
             }
         });
 

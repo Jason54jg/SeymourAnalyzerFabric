@@ -4,9 +4,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gizmos.GizmoStyle;
 import net.minecraft.gizmos.Gizmos;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Manages and renders highlighted block positions in the world.
@@ -73,10 +78,28 @@ public class BlockHighlighter {
         if (client.level == null) return;
 
         GizmoStyle style = GizmoStyle.strokeAndFill(toArgb(a), 2.0f, toArgb(a * 0.25f));
+        Set<BlockPos> remaining = new HashSet<>(highlightedBlocks);
         for (BlockPos pos : highlightedBlocks) {
+            if (!remaining.remove(pos)) continue;
+
             // Do not force always-on-top so highlights obey depth and occlusion.
-            Gizmos.cuboid(pos, style);
+            BlockPos partner = getDoubleChestPartner(pos, client);
+            if (partner != null) {
+                remaining.remove(partner);
+                Gizmos.cuboid(new AABB(pos).minmax(new AABB(partner)), style);
+            } else {
+                Gizmos.cuboid(pos, style);
+            }
         }
+    }
+
+    private BlockPos getDoubleChestPartner(BlockPos pos, Minecraft client) {
+        net.minecraft.world.level.block.state.BlockState state = client.level.getBlockState(pos);
+        if (!(state.getBlock() instanceof ChestBlock)
+                || state.getValue(ChestBlock.TYPE) == ChestType.SINGLE) {
+            return null;
+        }
+        return pos.relative(ChestBlock.getConnectedDirection(state));
     }
 
     private int toArgb(float alpha) {

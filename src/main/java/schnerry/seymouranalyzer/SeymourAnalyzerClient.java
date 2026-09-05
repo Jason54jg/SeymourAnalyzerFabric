@@ -12,11 +12,14 @@ import schnerry.seymouranalyzer.gambling.VisitorChatListener;
 import schnerry.seymouranalyzer.gui.GuiScaleManager;
 import schnerry.seymouranalyzer.keybind.KeyBindings;
 import schnerry.seymouranalyzer.render.BlockHighlighter;
+import schnerry.seymouranalyzer.render.ChestSpaceHighlighter;
 import schnerry.seymouranalyzer.render.HexTooltipRenderer;
 import schnerry.seymouranalyzer.render.InfoBoxRenderer;
 import schnerry.seymouranalyzer.render.ItemSlotHighlighter;
 import schnerry.seymouranalyzer.scanner.ChestScanner;
+import schnerry.seymouranalyzer.scanner.ChestSpaceTracker;
 import schnerry.seymouranalyzer.scanner.TradeScanner;
+import schnerry.seymouranalyzer.util.SkyBlockProfileTracker;
 
 /**
  * Client-side initialization
@@ -35,6 +38,10 @@ public class SeymourAnalyzerClient implements ClientModInitializer {
         // Initialize BlockHighlighter; actual world rendering now happens via DebugRendererMixin gizmos
         BlockHighlighter.getInstance();
         SeymourAnalyzer.LOGGER.info("Initialized BlockHighlighter");
+
+        // Initialize ChestSpaceHighlighter (tracks and renders chests with free space)
+        ChestSpaceHighlighter.getInstance();
+        SeymourAnalyzer.LOGGER.info("Initialized ChestSpaceHighlighter");
 
         // Initialize ItemSlotHighlighter (registers screen render events)
         ItemSlotHighlighter.getInstance();
@@ -61,6 +68,9 @@ public class SeymourAnalyzerClient implements ClientModInitializer {
 
         // Register TradeScanner chat listener (for trade-completion detection)
         TradeScanner.register();
+
+        // Track the active Hypixel SkyBlock profile and profile ID.
+        SkyBlockProfileTracker.register();
 
         // Generate checklist caches on startup (runs async to avoid blocking)
         new Thread(() -> {
@@ -90,6 +100,10 @@ public class SeymourAnalyzerClient implements ClientModInitializer {
                 TradeScanner.getInstance().tick(client);
                 // Tick collection manager for auto-save
                 CollectionManager.getInstance().tick();
+                
+                // Update chest space highlights and tick tracker for auto-save
+                ChestSpaceHighlighter.getInstance().updateFromCache();
+                ChestSpaceTracker.getInstance().tick();
             }
         });
 
@@ -106,4 +120,3 @@ public class SeymourAnalyzerClient implements ClientModInitializer {
         return chestScanner;
     }
 }
-

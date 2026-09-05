@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -28,6 +29,7 @@ import schnerry.seymouranalyzer.scanner.ChestScanner;
 import schnerry.seymouranalyzer.scanner.ScanBadge;
 import schnerry.seymouranalyzer.analyzer.ColorAnalyzer;
 import schnerry.seymouranalyzer.util.ColorMath;
+import schnerry.seymouranalyzer.util.SkyBlockProfileTracker;
 
 import java.net.URI;
 import java.util.*;
@@ -56,6 +58,18 @@ public class SeymourCommand {
             return builder.buildFuture();
         };
 
+    private static final SuggestionProvider<FabricClientCommandSource> PROFILE_SUGGESTIONS =
+        (ctx, builder) -> {
+            String remaining = builder.getRemaining().toLowerCase();
+            SkyBlockProfileTracker.getKnownProfiles().keySet().stream()
+                .map(SkyBlockProfileTracker::getProfileLabel)
+                .filter(profileName -> profileName.toLowerCase().startsWith(remaining))
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .forEach(builder::suggest);
+            return builder.buildFuture();
+        };
+
     public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher) {
         dispatcher.register(literal("seymour")
             .requires(FabricClientCommandSource::attended)
@@ -67,6 +81,10 @@ public class SeymourCommand {
                 .then(argument("option", StringArgumentType.word())
                     .suggests(TOGGLE_SUGGESTIONS)
                     .executes(SeymourCommand::toggleOption)))
+            
+            // /seymour version
+            .then(literal("version")
+                .executes(SeymourCommand::showVersion))
 
             // /seymour add <name> <hex>
             .then(literal("add")
@@ -119,7 +137,7 @@ public class SeymourCommand {
                 .then(literal("stop")
                     .executes(SeymourCommand::stopScan)))
 
-            // /seymour export start/stop/database
+            // /seymour export start/stop/database/profile <profile>
             .then(literal("export")
                 .executes(SeymourCommand::showExportHelp)
                 .then(literal("start")
@@ -127,7 +145,11 @@ public class SeymourCommand {
                 .then(literal("stop")
                     .executes(SeymourCommand::stopExport))
                 .then(literal("database")
-                    .executes(SeymourCommand::exportDatabase)))
+                    .executes(SeymourCommand::exportDatabase))
+                .then(literal("profile")
+                    .then(argument("profile", StringArgumentType.greedyString())
+                        .suggests(PROFILE_SUGGESTIONS)
+                        .executes(SeymourCommand::exportProfile))))
 
             // /seymour db [search] - open database GUI with optional search
             // /seymour db hex <hex> - force hex-field search
@@ -159,6 +181,17 @@ public class SeymourCommand {
             // /seymour patterns - open pattern matches GUI
             .then(literal("patterns")
                 .executes(SeymourCommand::openPatternMatchesGUI))
+
+            // /seymour profiles set <name> / reset / list
+            .then(literal("profiles")
+                .executes(SeymourCommand::showProfilesHelp)
+                .then(literal("set")
+                    .then(argument("name", StringArgumentType.greedyString())
+                        .executes(SeymourCommand::setProfileCustomName)))
+                .then(literal("reset")
+                    .executes(SeymourCommand::resetProfileCustomName))
+                .then(literal("list")
+                    .executes(SeymourCommand::listProfiles)))
 
 
             // /seymour config - open config GUI
@@ -222,6 +255,60 @@ public class SeymourCommand {
                     .then(argument("badgeId", StringArgumentType.word())
                         .executes(SeymourCommand::tradeRemove))))
         );
+    }
+
+    private static int showProfilesHelp(CommandContext<FabricClientCommandSource> ctx) {
+        ctx.getSource().sendFeedback(Component.literal("§a[Seymour] §7Profile commands:"));
+        ctx.getSource().sendFeedback(Component.literal("§f/seymour profiles set <name> §8- Set a custom name for the active profile"));
+        ctx.getSource().sendFeedback(Component.literal("§f/seymour profiles reset §8- Restore the Hypixel profile name"));
+        ctx.getSource().sendFeedback(Component.literal("§f/seymour profiles list §8- List stored profiles"));
+        return 1;
+    }
+
+    private static int setProfileCustomName(CommandContext<FabricClientCommandSource> ctx) {
+        String customName = StringArgumentType.getString(ctx, "name").trim();
+        if (customName.isEmpty()) {
+            ctx.getSource().sendError(Component.literal("§c[Seymour] §7Profile name cannot be empty."));
+            return 0;
+        }
+        if (!SkyBlockProfileTracker.setActiveProfileCustomName(customName)) {
+            ctx.getSource().sendError(Component.literal("§c[Seymour] §7No active SkyBlock profile is known yet."));
+            return 0;
+        }
+
+        ctx.getSource().sendFeedback(Component.literal(
+            "§a[Seymour] §7Current profile renamed to §e" + customName
+        ));
+        return 1;
+    }
+
+    private static int resetProfileCustomName(CommandContext<FabricClientCommandSource> ctx) {
+        if (!SkyBlockProfileTracker.clearActiveProfileCustomName()) {
+            ctx.getSource().sendError(Component.literal("§c[Seymour] §7No active SkyBlock profile is known yet."));
+            return 0;
+        }
+
+        String originalName = SkyBlockProfileTracker.getActiveProfileName().orElse("its Hypixel name");
+        ctx.getSource().sendFeedback(Component.literal(
+            "§a[Seymour] §7Current profile reset to §e" + originalName
+        ));
+        return 1;
+    }
+
+    private static int listProfiles(CommandContext<FabricClientCommandSource> ctx) {
+        Map<String, String> profiles = SkyBlockProfileTracker.getKnownProfiles();
+        if (profiles.isEmpty()) {
+            ctx.getSource().sendFeedback(Component.literal("§7[Seymour] No SkyBlock profiles stored yet."));
+            return 1;
+        }
+
+        ctx.getSource().sendFeedback(Component.literal("§a§l[Seymour] §7Stored profiles:"));
+        for (Map.Entry<String, String> entry : profiles.entrySet()) {
+            String displayName = SkyBlockProfileTracker.getProfileLabel(entry.getKey());
+            String suffix = displayName.equals(entry.getValue()) ? "" : " §8(Hypixel: " + entry.getValue() + ")";
+            ctx.getSource().sendFeedback(Component.literal("  §e" + displayName + suffix + " §8[" + entry.getKey() + "]"));
+        }
+        return 1;
     }
 
     private static int showHelp(CommandContext<FabricClientCommandSource> ctx) {
@@ -401,11 +488,21 @@ public class SeymourCommand {
     }
 
     private static int showExportHelp(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Component.literal("§c[Seymour] §7Usage: §f/seymour export <start|stop|database>"));
+        ctx.getSource().sendFeedback(Component.literal("§c[Seymour] §7Usage: §f/seymour export <start|stop|database|profile>"));
         ctx.getSource().sendFeedback(Component.literal("  §f/seymour export start §8- Start export mode"));
         ctx.getSource().sendFeedback(Component.literal("  §f/seymour export stop §8- Stop and copy scanned pieces to clipboard"));
         ctx.getSource().sendFeedback(Component.literal("  §f/seymour export database §8- Export entire database to clipboard"));
+        ctx.getSource().sendFeedback(Component.literal("  §f/seymour export profile <profile> §8- Export one profile to clipboard"));
         return 0;
+    }
+
+    private static int showVersion(CommandContext<FabricClientCommandSource> ctx) {
+        String version = FabricLoader.getInstance()
+            .getModContainer("seymouranalyzer")
+            .map(container -> container.getMetadata().getVersion().getFriendlyString())
+            .orElse("unknown");
+        ctx.getSource().sendFeedback(Component.literal("§a[Seymour Analyzer] §7Version: §e" + version));
+        return 1;
     }
 
     private static int showAddHelp(CommandContext<FabricClientCommandSource> ctx) {
@@ -897,14 +994,42 @@ public class SeymourCommand {
     }
 
     private static int exportDatabase(CommandContext<FabricClientCommandSource> ctx) {
-        try {
-            Map<String, ArmorPiece> collection = CollectionManager.getInstance().getCollection();
+        return exportCollection(ctx, CollectionManager.getInstance().getCollection().values(), "Database");
+    }
 
+    private static int exportProfile(CommandContext<FabricClientCommandSource> ctx) {
+        String requestedProfile = StringArgumentType.getString(ctx, "profile").trim();
+        List<String> matchingProfileIds = SkyBlockProfileTracker.getKnownProfiles().keySet().stream()
+            .filter(profileId -> profileId.equalsIgnoreCase(requestedProfile)
+                || SkyBlockProfileTracker.getProfileLabel(profileId).equalsIgnoreCase(requestedProfile))
+            .toList();
+
+        if (matchingProfileIds.isEmpty()) {
+            ctx.getSource().sendError(Component.literal("§c[Seymour] Unknown profile: §f" + requestedProfile));
+            return 0;
+        }
+        if (matchingProfileIds.size() > 1) {
+            ctx.getSource().sendError(Component.literal(
+                "§c[Seymour] Multiple profiles use that name. Set a custom name with /seymour profiles set <name>."
+            ));
+            return 0;
+        }
+
+        String profileId = matchingProfileIds.getFirst();
+        List<ArmorPiece> profilePieces = CollectionManager.getInstance().getCollection().values().stream()
+            .filter(piece -> profileId.equals(piece.getProfileId()))
+            .toList();
+        return exportCollection(ctx, profilePieces, "Profile " + SkyBlockProfileTracker.getProfileLabel(profileId));
+    }
+
+    private static int exportCollection(CommandContext<FabricClientCommandSource> ctx, Collection<ArmorPiece> collection,
+                                        String exportName) {
+        try {
             StringBuilder pretty = new StringBuilder();
-            pretty.append("Seymour Database Export - ").append(collection.size())
+            pretty.append("Seymour ").append(exportName).append(" Export - ").append(collection.size())
                 .append(" piece").append(collection.size() == 1 ? "" : "s").append("\n\n");
 
-            for (ArmorPiece piece : collection.values()) {
+            for (ArmorPiece piece : collection) {
                 String name = piece.getPieceName() != null ? piece.getPieceName() : "Unknown";
                 String hex = piece.getHexcode() != null ? ("#" + piece.getHexcode().toUpperCase()) : "#??????";
 
@@ -928,11 +1053,11 @@ public class SeymourCommand {
             mc.keyboardHandler.setClipboard(pretty.toString());
 
             ctx.getSource().sendFeedback(Component.literal("§a[Seymour Analyzer] §7Exported §e" +
-                collection.size() + "§7 pieces from database to clipboard!"));
+                collection.size() + "§7 pieces from " + exportName.toLowerCase() + " to clipboard!"));
 
         } catch (Exception e) {
-            ctx.getSource().sendError(Component.literal("§c[Seymour] Failed to export database: " + e.getMessage()));
-            SeymourAnalyzer.LOGGER.error("Database export failed", e);
+            ctx.getSource().sendError(Component.literal("§c[Seymour] Failed to export " + exportName.toLowerCase() + ": " + e.getMessage()));
+            SeymourAnalyzer.LOGGER.error("{} export failed", exportName, e);
         }
         return 1;
     }
@@ -961,7 +1086,6 @@ public class SeymourCommand {
     private static int openBestSetsGUI(CommandContext<FabricClientCommandSource> ctx) {
         try {
             runOnClientThread(() -> Minecraft.getInstance().gui.setScreen(new BestSetsScreen(null)));
-            ctx.getSource().sendFeedback(Component.literal("§a[Seymour] §7Best Sets GUI opened!"));
         } catch (Exception e) {
             ctx.getSource().sendError(Component.literal("§c[Seymour] §7Error: " + e.getMessage()));
             return reportCommandError(ctx, "opening best sets GUI", e);
@@ -1059,14 +1183,27 @@ public class SeymourCommand {
 
             // Search for pieces with these hex codes
             Map<String, ArmorPiece> collection = CollectionManager.getInstance().getCollection();
+            String activeProfileId = SkyBlockProfileTracker.getActiveProfileId().orElse(null);
+            if (activeProfileId == null) {
+                ctx.getSource().sendError(Component.literal(
+                    "§c[Seymour] §7Cannot search pieces until the active SkyBlock profile is known."
+                ));
+                return 0;
+            }
+
+            String activeProfileName = SkyBlockProfileTracker.getActiveProfileName().orElse(activeProfileId);
             List<ArmorPiece> foundPieces = new ArrayList<>();
             Set<String> foundChestLocations = new HashSet<>();
             List<BlockPos> blocksToHighlight = new ArrayList<>();
+            Set<String> foundHexes = new HashSet<>();
+            Map<String, Integer> foreignProfileMatches = new LinkedHashMap<>();
 
             for (ArmorPiece piece : collection.values()) {
+                if (piece.getHexcode() == null) continue;
                 String pieceHex = piece.getHexcode().toUpperCase();
-                if (validHexes.contains(pieceHex)) {
+                if (validHexes.contains(pieceHex) && activeProfileId.equals(piece.getProfileId())) {
                     foundPieces.add(piece);
+                    foundHexes.add(pieceHex);
 
                     // Track chest location if available and add to highlighter
                     ArmorPiece.ChestLocation chestLoc = piece.getChestLocation();
@@ -1078,6 +1215,11 @@ public class SeymourCommand {
                             blocksToHighlight.add(blockPos);
                         }
                     }
+                } else if (validHexes.contains(pieceHex)) {
+                    String storedProfileName = piece.getProfileId() == null
+                        ? "Unassigned"
+                        : SkyBlockProfileTracker.getProfileLabel(piece.getProfileId());
+                    foreignProfileMatches.merge(storedProfileName, 1, Integer::sum);
                 }
             }
 
@@ -1087,14 +1229,21 @@ public class SeymourCommand {
             }
 
             // Add search hex codes to item highlighter for slot highlighting
-            for (String validHex : validHexes) {
-                ItemSlotHighlighter.getInstance().addSearchHex(validHex);
+            for (String foundHex : foundHexes) {
+                ItemSlotHighlighter.getInstance().addSearchHex(foundHex);
             }
 
             // Display results
             ctx.getSource().sendFeedback(Component.literal("§8§m----------------------------------------------------"));
             ctx.getSource().sendFeedback(Component.literal("§a§l[Seymour Analyzer] §7- Search Results"));
             ctx.getSource().sendFeedback(Component.literal("§7Searching for §e" + validHexes.size() + " §7hex code(s)"));
+
+            for (Map.Entry<String, Integer> entry : foreignProfileMatches.entrySet()) {
+                ctx.getSource().sendError(Component.literal(
+                    "§c" + entry.getValue() + " piece(s) not on current profile §e" + activeProfileName
+                        + "§c, saved on §e" + entry.getKey()
+                ));
+            }
 
             if (foundPieces.isEmpty()) {
                 ctx.getSource().sendFeedback(Component.literal("§c§lNo pieces found!"));
@@ -1579,4 +1728,3 @@ public class SeymourCommand {
         return 1;
     }
 }
-

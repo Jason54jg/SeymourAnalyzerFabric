@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import schnerry.seymouranalyzer.data.ArmorPiece;
 import schnerry.seymouranalyzer.data.CollectionManager;
 import schnerry.seymouranalyzer.util.ColorMath;
+import schnerry.seymouranalyzer.util.SkyBlockProfileTracker;
 
 import java.util.*;
 
@@ -17,6 +18,8 @@ import java.util.*;
 public class WordMatchesScreen extends ModScreen {
     private List<WordMatchEntry> wordMatches = new ArrayList<>();
     private int scrollOffset = 0;
+    private String selectedProfileId;
+    private boolean profileDropdownOpen;
 
     // Scrollbar dragging
     private boolean isDraggingScrollbar = false;
@@ -40,7 +43,12 @@ public class WordMatchesScreen extends ModScreen {
     }
 
     public WordMatchesScreen(Screen parent) {
+        this(parent, SkyBlockProfileTracker.ALL_PROFILES);
+    }
+
+    public WordMatchesScreen(Screen parent, String selectedProfileId) {
         super(Component.literal("Word Matches"), parent);
+        this.selectedProfileId = selectedProfileId;
         loadWordMatches();
     }
 
@@ -49,6 +57,10 @@ public class WordMatchesScreen extends ModScreen {
         Map<String, ArmorPiece> collection = CollectionManager.getInstance().getCollection();
 
         for (ArmorPiece piece : collection.values()) {
+            if (!SkyBlockProfileTracker.ALL_PROFILES.equals(selectedProfileId)
+                    && !selectedProfileId.equals(piece.getProfileId())) {
+                continue;
+            }
             String wordMatch = piece.getWordMatch();
             if (wordMatch != null && !wordMatch.isEmpty()) {
                 WordMatchEntry entry = wordMap.computeIfAbsent(wordMatch, k -> {
@@ -76,11 +88,36 @@ public class WordMatchesScreen extends ModScreen {
         }).bounds(20, 10, 150, 20).build();
         this.addRenderableWidget(backBtn);
 
+        Button profileSelector = Button.builder(
+            Component.literal("Profile: " + SkyBlockProfileTracker.getProfileLabel(selectedProfileId)),
+            button -> {
+                profileDropdownOpen = !profileDropdownOpen;
+                this.rebuildWidgets();
+            })
+            .bounds(175, 10, 145, 20)
+            .build();
+        this.addRenderableWidget(profileSelector);
+
         // Copy All button
         Button copyBtn = Button.builder(Component.literal("§eCopy All"),
             button -> copyAllToClipboard())
             .bounds(this.width - 100, 10, 80, 20).build();
         this.addRenderableWidget(copyBtn);
+        addProfileDropdownOptions();
+    }
+
+    private void addProfileDropdownOptions() {
+        if (!profileDropdownOpen) return;
+        for (Button option : ProfileDropdown.createOptions(175, 30, 145, selectedProfileId, profileId -> {
+            selectedProfileId = profileId;
+            profileDropdownOpen = false;
+            scrollOffset = 0;
+            contextMenu = null;
+            loadWordMatches();
+            this.rebuildWidgets();
+        })) {
+            this.addRenderableWidget(option);
+        }
     }
 
     @Override
@@ -108,6 +145,9 @@ public class WordMatchesScreen extends ModScreen {
         }
 
         super.render(guiGraphics, mouseX, mouseY, delta);
+        if (profileDropdownOpen) {
+            ProfileDropdown.renderModal(guiGraphics, this.font, this.width, this.height, 175, 10, 145, 20, selectedProfileId);
+        }
     }
 
     private void drawContextMenu(GuiGraphicsExtractor guiGraphics) {
@@ -269,6 +309,20 @@ public class WordMatchesScreen extends ModScreen {
         double mouseY = click.y();
         int button = click.button();
 
+        if (profileDropdownOpen) {
+            if (button == 0) {
+                ProfileDropdown.getSelectedOption(mouseX, mouseY, 175, 10, 145, 20).ifPresent(profileId -> {
+                    selectedProfileId = profileId;
+                    scrollOffset = 0;
+                    contextMenu = null;
+                    loadWordMatches();
+                });
+            }
+            profileDropdownOpen = false;
+            this.rebuildWidgets();
+            return true;
+        }
+
         // Handle guiGraphics menu clicks first
         if (contextMenu != null) {
             if (handleContextMenuClick(mouseX, mouseY, button)) {
@@ -399,8 +453,3 @@ public class WordMatchesScreen extends ModScreen {
         return false;
     }
 }
-
-
-
-
-

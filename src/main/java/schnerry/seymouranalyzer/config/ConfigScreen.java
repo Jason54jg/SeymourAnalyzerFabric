@@ -5,6 +5,7 @@ import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import schnerry.seymouranalyzer.render.HexTooltipRenderer;
 
 /**
  * Cloth Config GUI screen provider
@@ -100,6 +101,29 @@ public class ConfigScreen {
                 })
                 .build());
 
+        analysisCategory.addEntry(entryBuilder.startBooleanToggle(
+                Component.literal("DB Compare Current Profile Only"),
+                config.isDbCompareCurrentProfileOnly())
+                .setDefaultValue(false)
+                .setTooltip(Component.literal("Only compare pieces stored on the Hypixel SkyBlock profile you are currently playing."))
+                .setSaveConsumer(value -> {
+                    config.setDbCompareCurrentProfileOnly(value);
+                    HexTooltipRenderer.getInstance().clearDbCache();
+                })
+                .build());
+
+        analysisCategory.addEntry(entryBuilder.startEnumSelector(
+                Component.literal("DB Compare Mode"),
+                DBCompareMode.class,
+                config.getDbCompareMode())
+                .setDefaultValue(DBCompareMode.NORMAL)
+                .setTooltip(Component.literal("normal: closest by ΔE | different: exclude same piece type | unique: always one closest of each other piece type"))
+                .setSaveConsumer(value -> {
+                    config.setDbCompareMode(value);
+                    HexTooltipRenderer.getInstance().clearDbCache();
+                })
+                .build());
+
         // Match Priority Editor - Create a subcategory
         ConfigCategory priorityCategory = builder.getOrCreateCategory(Component.literal("Match Priorities"));
 
@@ -145,7 +169,7 @@ public class ConfigScreen {
                 Component.literal("Show High Fades"),
                 config.isShowHighFades())
                 .setDefaultValue(false)
-                .setTooltip(Component.literal("Show fade dye matches with ΔE > 2.00 (T3+)"))
+                .setTooltip(Component.literal("Show fade dye matches with ΔE > 2.00 (T2+)"))
                 .setSaveConsumer(config::setShowHighFades)
                 .build());
 
@@ -153,7 +177,7 @@ public class ConfigScreen {
                 Component.literal("Show High Customs"),
                 config.isShowHighCustoms())
                 .setDefaultValue(true)
-                .setTooltip(Component.literal("Show custom color matches with ΔE > 2.00 (T3+)"))
+                .setTooltip(Component.literal("Show custom color matches with ΔE > 2.00 (T2+)"))
                 .setSaveConsumer(config::setShowHighCustoms)
                 .build());
 
@@ -161,7 +185,7 @@ public class ConfigScreen {
                 Component.literal("Show High Fakes"),
                 config.isShowHighFakes())
                 .setDefaultValue(true)
-                .setTooltip(Component.literal("Show fake piece matches with ΔE > 2.00 (T3+)"))
+                .setTooltip(Component.literal("Show fake piece matches with ΔE > 2.00 (T2+)"))
                 .setSaveConsumer(config::setShowHighFakes)
                 .build());
 
@@ -230,7 +254,14 @@ public class ConfigScreen {
                 })
                 .build());
 
+        guiCategory.addEntry(entryBuilder.startBooleanToggle(
+                Component.literal("Best Sets: ΔE < 2 Only"),
+                config.isBestSetsUnderDeltaTwoOnly())
+                .setDefaultValue(false)
+                .setTooltip(Component.literal("Show only best sets with average ΔE below 2.0 instead of top 100 sets"))
+                .setSaveConsumer(config::setBestSetsUnderDeltaTwoOnly)
+                .build());
+
         return builder.build();
     }
 }
-

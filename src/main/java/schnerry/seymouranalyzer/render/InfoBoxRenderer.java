@@ -715,7 +715,7 @@ public class InfoBoxRenderer {
                     yOffset += 10;
                 }
             }
-            if (config.isDupesEnabled() && hoveredItemData.dupeCount > 0) {
+            if (config.isDupesEnabled() && hoveredItemData != null && hoveredItemData.dupeCount > 0) {
                 guiGraphics.text(client.font, Component.literal("§c§l⚠ DUPE HEX §7(x" + hoveredItemData.dupeCount + ")"), 5, yOffset, 0xFFFFFFFF, true);
             }
         }

@@ -288,8 +288,7 @@
       {"hex": "D91E41", "name": "Strong Dragon Chestplate", "pieces": ["chestplate"]},
       {"hex": "E09419", "name": "Strong Dragon Leggings", "pieces": ["leggings"]},
       {"hex": "F0D124", "name": "Strong Dragon Boots", "pieces": ["boots"]},
-      {"hex": "F2DF11", "name": "Superior Dragon Chestplate", "pieces": ["chestplate"]},
-      {"hex": "F2DF11", "name": "Superior Dragon Leggings", "pieces": ["leggings"]},
+      {"hex": "F2DF11", "name": "Superior Dragon Chestplate + Leggings", "pieces": ["chestplate", "leggings"]},
       {"hex": "F25D18", "name": "Superior Dragon Boots", "pieces": ["boots"]},
       {"hex": "47D147", "name": "Holy Dragon Armor 3p", "pieces": ["chestplate", "leggings", "boots"]},
       {"hex": "F0E6AA", "name": "Old Dragon Armor 3p", "pieces": ["chestplate", "leggings", "boots"]},
@@ -408,7 +407,8 @@
       {"hex": "FF8ECA", "name": "Celeste Leggings", "pieces": ["leggings"]},
       {"hex": "FF8EB6", "name": "Celeste Boots", "pieces": ["boots"]},
       {"hex": "D400FF", "name": "Starlight Chestplate + Boots", "pieces": ["chestplate", "boots"]},
-      {"hex": "7A4120", "name": "Kelly Quest 3p", "pieces": ["chestplate", "leggings", "boots"]},
+      {"hex": "FFFFFF", "name": "Kelly's T-Shirt", "pieces": ["chestplate"]},
+      {"hex": "E25A16", "name": "Helix 3p", "pieces": ["chestplate", "leggings", "boots"]},
       {"hex": "1C9759", "name": "Fig 3p", "pieces": ["chestplate", "leggings", "boots"]},
       {"hex": "4DCC4D", "name": "Leaflet 3p", "pieces": ["chestplate", "leggings", "boots"]},
       {"hex": "00BE00", "name": "Growth Armor", "pieces": ["helmet", "chestplate", "leggings", "boots"]},
@@ -439,4 +439,3 @@
     "Other"
   ]
 }
-

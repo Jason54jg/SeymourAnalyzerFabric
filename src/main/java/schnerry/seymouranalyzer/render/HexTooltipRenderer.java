@@ -17,10 +17,13 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import schnerry.seymouranalyzer.analyzer.ColorAnalyzer;
 import schnerry.seymouranalyzer.config.ClothConfig;
+import schnerry.seymouranalyzer.config.DBCompareMode;
 import schnerry.seymouranalyzer.data.ArmorPiece;
 import schnerry.seymouranalyzer.data.CollectionManager;
 import schnerry.seymouranalyzer.util.ColorMath;
 import schnerry.seymouranalyzer.util.ItemStackUtils;
+import schnerry.seymouranalyzer.util.PieceTypeUtil;
+import schnerry.seymouranalyzer.util.SkyBlockProfileTracker;
 import schnerry.seymouranalyzer.util.StringUtility;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
@@ -46,7 +49,7 @@ public class HexTooltipRenderer {
     /** Cache: hex string → list of 3 closest DB pieces (DbMatch) */
     private final Map<String, List<DbMatch>> dbCompareCache = new ConcurrentHashMap<>();
 
-    private record DbMatch(String pieceName, String hexcode, double deltaE, int absoluteDistance) {}
+    private record DbMatch(String pieceName, String hexcode, double deltaE, int absoluteDistance, String pieceType) {}
 
     private HexTooltipRenderer() {
         // Register tooltip callback
@@ -181,8 +184,8 @@ public class HexTooltipRenderer {
                                || InputConstants.isKeyDown(window2, GLFW.GLFW_KEY_RIGHT_SHIFT);
             if (shiftHeld2 && ClothConfig.getInstance().isDbCompareEnabled()) {
                 String selfUuid = ItemStackUtils.getOrCreateItemUUID(stack);
-                Boolean diffOnly = ClothConfig.getInstance().isDbCompareOnlyDiffPieces();
-                List<DbMatch> dbMatches = getDbCompareMatches(hexForAnalysis, itemName, selfUuid, diffOnly);
+                DBCompareMode mode = ClothConfig.getInstance().getDbCompareMode();
+                List<DbMatch> dbMatches = getDbCompareMatches(hexForAnalysis, itemName, selfUuid, mode);
                 if (!dbMatches.isEmpty()) {
                     MutableComponent dbHeader = Component.literal("─── DB Compare ───");
                     dbHeader.setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x888888)).withItalic(false));
@@ -235,25 +238,53 @@ public class HexTooltipRenderer {
 
     /**
      * Get or compute the 3 closest pieces from the user's collection by ΔE.
-     * Results are cached by "hex:selfUuid". The piece with selfUuid is excluded.
+     * Results are cached by "hex:selfUuid:mode:pieceType". The piece with selfUuid is excluded.
      */
-    private List<DbMatch> getDbCompareMatches(String hex, String pieceType, String selfUuid, Boolean diffOnly) {
-        String cacheKey = hex + ":" + (selfUuid != null ? selfUuid : "");
+    private List<DbMatch> getDbCompareMatches(String hex, String pieceType, String selfUuid, DBCompareMode mode) {
+        final DBCompareMode finalMode = mode == null ? DBCompareMode.NORMAL : mode;
+        String modeStr = finalMode.name().toLowerCase();
+        boolean currentProfileOnly = ClothConfig.getInstance().isDbCompareCurrentProfileOnly();
+        String activeProfileId = currentProfileOnly
+            ? SkyBlockProfileTracker.getActiveProfileId().orElse("")
+            : "";
+        String cacheKey = hex + ":" + (selfUuid != null ? selfUuid : "") + ":" + modeStr + ":" + pieceType
+            + ":" + currentProfileOnly + ":" + activeProfileId;
         return dbCompareCache.computeIfAbsent(cacheKey, k -> {
             Map<String, ArmorPiece> collection = CollectionManager.getInstance().getCollection();
             if (collection.isEmpty()) return List.of();
+            if (currentProfileOnly && activeProfileId.isEmpty()) return List.of();
+
+            String sourcePieceType = PieceTypeUtil.detectPieceType(pieceType);
+            List<String> otherPieceTypes = List.of("helmet", "chestplate", "leggings", "boots").stream()
+                .filter(t -> sourcePieceType == null || !t.equals(sourcePieceType))
+                .toList();
 
             List<DbMatch> results = new ArrayList<>();
             for (ArmorPiece piece : collection.values()) {
                 if (piece.getHexcode() == null || piece.getHexcode().isEmpty()) continue;
+                if (currentProfileOnly && !activeProfileId.equals(piece.getProfileId())) continue;
                 // Exclude self by UUID
                 if (selfUuid != null && selfUuid.equals(piece.getUuid())) continue;
-                // Exclude same piece type when diffOnly is true
-                if (diffOnly != null && diffOnly && pieceType.equals(piece.getPieceName())) continue;
+                String candidateType = PieceTypeUtil.detectPieceType(piece.getPieceName());
+                if (finalMode == DBCompareMode.DIFFERENT && sourcePieceType != null && sourcePieceType.equals(candidateType)) continue;
                 double delta = ColorMath.calculateDeltaE(hex, piece.getHexcode());
                 int absDistance = ColorMath.calculateAbsoluteDistance(hex, piece.getHexcode());
-                results.add(new DbMatch(piece.getPieceName(), piece.getHexcode(), delta, absDistance));
+                results.add(new DbMatch(piece.getPieceName(), piece.getHexcode(), delta, absDistance, candidateType));
             }
+
+            if (finalMode == DBCompareMode.UNIQUE && sourcePieceType != null) {
+                List<DbMatch> uniqueResults = new ArrayList<>();
+                for (String targetType : otherPieceTypes) {
+                    DbMatch bestForType = results.stream()
+                        .filter(r -> targetType.equals(r.pieceType()))
+                        .min(Comparator.comparingDouble(DbMatch::deltaE))
+                        .orElse(null);
+                    if (bestForType != null) uniqueResults.add(bestForType);
+                }
+                uniqueResults.sort(Comparator.comparingDouble(DbMatch::deltaE));
+                return uniqueResults;
+            }
+
             results.sort(Comparator.comparingDouble(DbMatch::deltaE));
             return results.stream().limit(3).toList();
         });
@@ -393,4 +424,3 @@ public class HexTooltipRenderer {
         }
     }
 }
-

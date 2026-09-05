@@ -24,6 +24,7 @@ import schnerry.seymouranalyzer.data.ArmorPiece;
 import schnerry.seymouranalyzer.data.CollectionManager;
 import schnerry.seymouranalyzer.util.ItemStackUtils;
 import schnerry.seymouranalyzer.util.ScoreboardUtils;
+import schnerry.seymouranalyzer.util.SkyBlockProfileTracker;
 import schnerry.seymouranalyzer.util.StringUtility;
 
 import java.util.*;
@@ -41,6 +42,7 @@ public class ChestScanner {
     private long lastChestOpenTime = 0;
     private long lastLocationUpdateTime = 0;
     private long lastItemFrameScanTime = 0;
+    private AbstractContainerScreen<?> trackedChestScreen = null;
     private static final long SCAN_DELAY_MS = 250;
     private static final long LOCATION_UPDATE_INTERVAL_MS = 250;
     private static final long ITEM_FRAME_SCAN_INTERVAL_MS = 5000;
@@ -61,6 +63,10 @@ public class ChestScanner {
     public void startScan() {
         if (exportingEnabled) {
             SeymourAnalyzer.LOGGER.warn("Cannot start scanning while exporting");
+            return;
+        }
+        if (!SkyBlockProfileTracker.hasActiveProfile()) {
+            SeymourAnalyzer.LOGGER.warn("Cannot start scanning before the active SkyBlock profile is known");
             return;
         }
         scanningEnabled = true;
@@ -187,13 +193,25 @@ public class ChestScanner {
         if (client.gui.screen() instanceof AbstractContainerScreen<?> screen) {
             String title = screen.getTitle().getString();
             boolean isKnownNonChestScreen = title.contains("Auctions")
+                || title.contains("Showcase")
                 || title.startsWith("Trading with ")
                 || TradeScanner.isHypixelTradeTitle(title);
-            if (!isKnownNonChestScreen && isPlayerLookingAtStorageBlock(client)
-                    && now - lastLocationUpdateTime >= LOCATION_UPDATE_INTERVAL_MS) {
-                lastLocationUpdateTime = now;
-                updateKnownPieceLocations(screen, client);
+            if (!isKnownNonChestScreen && trackedChestScreen != screen) {
+                trackedChestScreen = screen;
+                BlockPos storagePos = ChestSpaceTracker.getInstance().consumePendingStorageInteraction();
+                if (storagePos != null) {
+                    ChestSpaceTracker.getInstance().onChestOpen(screen, storagePos);
+                }
+                if (now - lastLocationUpdateTime >= LOCATION_UPDATE_INTERVAL_MS) {
+                    lastLocationUpdateTime = now;
+                    updateKnownPieceLocations(screen, client);
+                }
+            } else if (!isKnownNonChestScreen && trackedChestScreen == screen) {
+                ChestSpaceTracker.getInstance().updateCurrentChestContents(screen);
             }
+        } else {
+            ChestSpaceTracker.getInstance().clearCurrentOpenChest();
+            trackedChestScreen = null;
         }
 
         if (!scanningEnabled && !exportingEnabled) return;
@@ -211,7 +229,8 @@ public class ChestScanner {
                 scanChestContents(screen, client);
             }
         } else {
-            // Screen closed or changed to non-container – flush any pending batch
+            // Screen closed or changed to non-container – flush any pending batch and clear current chest highlight
+            ChestSpaceTracker.getInstance().clearCurrentOpenChest();
             if (pendingBatchScreen != null) {
                 flushChestBatch(client);
                 pendingBatchScreen = null;
@@ -264,11 +283,28 @@ public class ChestScanner {
      * NOTE: no longer sends chat messages directly; accumulates into pendingBatchUuids.
      */
     private void scanChestContents(AbstractContainerScreen<?> screen, Minecraft client) {
-        if (!scanningEnabled && !exportingEnabled) return;
+        if (!scanningEnabled && !exportingEnabled) {
+            // Still track the exact chest currently open, even if scanning is off.
+            try {
+                if (screen.getMenu() == null) return;
+                String title = screen.getTitle().getString();
+                if (title.contains("Auctions") || title.contains("Showcase")) return;
+
+                ArmorPiece.ChestLocation chestLoc = getChestLocationFromLooking(client);
+                if (chestLoc != null && client.player != null) {
+                    BlockPos chestPos = new BlockPos(chestLoc.x, chestLoc.y, chestLoc.z);
+                    ChestSpaceTracker.getInstance().onChestOpen(screen, chestPos);
+                }
+            } catch (Exception e) {
+                SeymourAnalyzer.LOGGER.error("Error tracking chest space", e);
+            }
+            return;
+        }
 
         try {
             if (screen.getMenu() == null) return;
-            if (screen.getTitle().getString().contains("Auctions")) return;
+            String title = screen.getTitle().getString();
+            if (title.contains("Auctions") || title.contains("Showcase")) return;
 
             ArmorPiece.ChestLocation chestLoc = getChestLocationFromLooking(client);
             List<Slot> slots = screen.getMenu().slots;
@@ -546,7 +582,9 @@ public class ChestScanner {
     }
 
     /**
-     * Get chest location from player's crosshair
+     * Get chest location from player's crosshair.
+     * If the GUI is already open and the crosshair no longer points at a block,
+     * fall back to the nearest real storage block around the player.
      */
     private ArmorPiece.ChestLocation getChestLocationFromLooking(Minecraft client) {
         if (client.player == null) return null;
@@ -557,12 +595,7 @@ public class ChestScanner {
             return new ArmorPiece.ChestLocation(pos.getX(), pos.getY(), pos.getZ());
         }
 
-        // Fallback to player position
-        return new ArmorPiece.ChestLocation(
-            (int) Math.floor(client.player.getX()),
-            (int) Math.floor(client.player.getY()),
-            (int) Math.floor(client.player.getZ())
-        );
+        return null;
     }
 
     /**
@@ -586,4 +619,3 @@ public class ChestScanner {
         return StringUtility.isSeymourArmor(itemName);
     }
 }
-

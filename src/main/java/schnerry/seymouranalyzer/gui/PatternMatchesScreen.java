@@ -9,6 +9,7 @@ import schnerry.seymouranalyzer.analyzer.PatternDetector;
 import schnerry.seymouranalyzer.data.ArmorPiece;
 import schnerry.seymouranalyzer.data.CollectionManager;
 import schnerry.seymouranalyzer.util.ColorMath;
+import schnerry.seymouranalyzer.util.SkyBlockProfileTracker;
 
 import java.util.*;
 
@@ -19,6 +20,8 @@ public class PatternMatchesScreen extends ModScreen {
     private List<PatternMatchEntry> patternMatches = new ArrayList<>();
     private int scrollOffset = 0;
     private Map<String, Integer> patternCounts = new LinkedHashMap<>();
+    private String selectedProfileId;
+    private boolean profileDropdownOpen;
 
     // Scrollbar dragging
     private boolean isDraggingScrollbar = false;
@@ -42,7 +45,12 @@ public class PatternMatchesScreen extends ModScreen {
     }
 
     public PatternMatchesScreen(Screen parent) {
+        this(parent, SkyBlockProfileTracker.ALL_PROFILES);
+    }
+
+    public PatternMatchesScreen(Screen parent, String selectedProfileId) {
         super(Component.literal("Pattern Matches"), parent);
+        this.selectedProfileId = selectedProfileId;
         loadPatternMatches();
     }
 
@@ -52,6 +60,10 @@ public class PatternMatchesScreen extends ModScreen {
         PatternDetector detector = PatternDetector.getInstance();
 
         for (ArmorPiece piece : collection.values()) {
+            if (!SkyBlockProfileTracker.ALL_PROFILES.equals(selectedProfileId)
+                    && !selectedProfileId.equals(piece.getProfileId())) {
+                continue;
+            }
             String pattern = detector.detectPattern(piece.getHexcode());
             if (pattern != null) {
                 PatternMatchEntry entry = patternMap.computeIfAbsent(pattern, k -> {
@@ -81,6 +93,8 @@ public class PatternMatchesScreen extends ModScreen {
             }
         });
 
+        patternCounts.clear();
+
         // Calculate counts
         for (PatternMatchEntry entry : patternMatches) {
             patternCounts.put(entry.patternType, entry.pieces.size());
@@ -97,11 +111,36 @@ public class PatternMatchesScreen extends ModScreen {
         }).bounds(20, 10, 150, 20).build();
         this.addRenderableWidget(backBtn);
 
+        Button profileSelector = Button.builder(
+            Component.literal("Profile: " + SkyBlockProfileTracker.getProfileLabel(selectedProfileId)),
+            button -> {
+                profileDropdownOpen = !profileDropdownOpen;
+                this.rebuildWidgets();
+            })
+            .bounds(175, 10, 145, 20)
+            .build();
+        this.addRenderableWidget(profileSelector);
+
         // Copy All button
         Button copyBtn = Button.builder(Component.literal("§eCopy All"),
             button -> copyAllToClipboard())
             .bounds(this.width - 100, 10, 80, 20).build();
         this.addRenderableWidget(copyBtn);
+        addProfileDropdownOptions();
+    }
+
+    private void addProfileDropdownOptions() {
+        if (!profileDropdownOpen) return;
+        for (Button option : ProfileDropdown.createOptions(175, 30, 145, selectedProfileId, profileId -> {
+            selectedProfileId = profileId;
+            profileDropdownOpen = false;
+            scrollOffset = 0;
+            contextMenu = null;
+            loadPatternMatches();
+            this.rebuildWidgets();
+        })) {
+            this.addRenderableWidget(option);
+        }
     }
 
     @Override
@@ -129,6 +168,9 @@ public class PatternMatchesScreen extends ModScreen {
         }
 
         super.render(guiGraphics, mouseX, mouseY, delta);
+        if (profileDropdownOpen) {
+            ProfileDropdown.renderModal(guiGraphics, this.font, this.width, this.height, 175, 10, 145, 20, selectedProfileId);
+        }
     }
 
     private void drawContextMenu(GuiGraphicsExtractor guiGraphics) {
@@ -337,6 +379,20 @@ public class PatternMatchesScreen extends ModScreen {
         double mouseY = click.y();
         int button = click.button();
 
+        if (profileDropdownOpen) {
+            if (button == 0) {
+                ProfileDropdown.getSelectedOption(mouseX, mouseY, 175, 10, 145, 20).ifPresent(profileId -> {
+                    selectedProfileId = profileId;
+                    scrollOffset = 0;
+                    contextMenu = null;
+                    loadPatternMatches();
+                });
+            }
+            profileDropdownOpen = false;
+            this.rebuildWidgets();
+            return true;
+        }
+
         // Handle guiGraphics menu clicks first
         if (contextMenu != null) {
             if (handleContextMenuClick(mouseX, mouseY, button)) {
@@ -516,4 +572,3 @@ public class PatternMatchesScreen extends ModScreen {
         return false;
     }
 }
-

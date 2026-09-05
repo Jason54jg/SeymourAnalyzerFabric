@@ -17,6 +17,7 @@ import schnerry.seymouranalyzer.data.ChecklistCache;
 import schnerry.seymouranalyzer.data.CollectionManager;
 import schnerry.seymouranalyzer.util.ColorMath;
 import schnerry.seymouranalyzer.util.PieceTypeUtil;
+import schnerry.seymouranalyzer.util.SkyBlockProfileTracker;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -41,6 +42,8 @@ public class ArmorChecklistScreen extends ModScreen {
     // Mode toggles
     private boolean fadeDyeMode = false;
     private boolean pieceToPieceMode = false;
+    private String selectedProfileId = SkyBlockProfileTracker.ALL_PROFILES;
+    private boolean profileDropdownOpen;
 
     // Scrollbar dragging
     private boolean isDraggingScrollbar = false;
@@ -84,6 +87,14 @@ public class ArmorChecklistScreen extends ModScreen {
         // Check if cache needs invalidation (collection size changed)
         ChecklistCache cache = ChecklistCache.getInstance();
         Map<String, ArmorPiece> collection = CollectionManager.getInstance().getCollection();
+        if (!SkyBlockProfileTracker.ALL_PROFILES.equals(selectedProfileId)) {
+            collection = collection.entrySet().stream()
+                .filter(entry -> selectedProfileId.equals(entry.getValue().getProfileId()))
+                .collect(java.util.stream.Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue
+                ));
+        }
         cache.checkAndInvalidate(collection.size());
 
         // Restore pinned page/mode before calculating matches
@@ -177,6 +188,7 @@ public class ArmorChecklistScreen extends ModScreen {
                                 "Kingfisher", "Lava", "Lucky", "Marine",
                                 "Oasis", "Ocean", "Pastel Sky", "Portal", "Red Tulip", "Rose",
                                 "Snowflake", "Spooky", "Sunflower", "Sunset", "Warden", "Charcoal", "Beach"};
+            Arrays.sort(fadeDyes, String.CASE_INSENSITIVE_ORDER);
             for (String fadeDye : fadeDyes) {
                 if (categories.containsKey(fadeDye)) {
                     fadeDyePageOrder.add(fadeDye);
@@ -327,6 +339,15 @@ public class ArmorChecklistScreen extends ModScreen {
 
     private void calculateOptimalMatches() {
         Map<String, ArmorPiece> collection = CollectionManager.getInstance().getCollection();
+        boolean allProfilesSelected = SkyBlockProfileTracker.ALL_PROFILES.equals(selectedProfileId);
+        if (!allProfilesSelected) {
+            collection = collection.entrySet().stream()
+                .filter(entry -> selectedProfileId.equals(entry.getValue().getProfileId()))
+                .collect(java.util.stream.Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue
+                ));
+        }
         ChecklistCache cache = ChecklistCache.getInstance();
 
         if (pageOrder.isEmpty() || currentPage >= pageOrder.size()) return;
@@ -334,6 +355,12 @@ public class ArmorChecklistScreen extends ModScreen {
         String currentCategory = pageOrder.get(currentPage);
         List<ChecklistEntry> entries = categories.get(currentCategory);
         if (entries == null) return;
+
+        // Entries are reused while switching profiles, so discard assignments from the prior selection.
+        for (ChecklistEntry entry : entries) {
+            entry.foundPieces.clear();
+            entry.foundPieceUuids.clear();
+        }
 
         // Check if we have cached data for this category
         ChecklistCache.CategoryCache categoryCache;
@@ -344,7 +371,8 @@ public class ArmorChecklistScreen extends ModScreen {
         }
 
         // If we have valid cached data, use it
-        if (categoryCache != null && categoryCache.matchesByIndex != null) {
+        if (allProfilesSelected
+                && categoryCache != null && categoryCache.matchesByIndex != null) {
             // Validate that cached hex values match current entries
             boolean cacheValid = true;
             for (int i = 0; i < entries.size(); i++) {
@@ -367,9 +395,6 @@ public class ArmorChecklistScreen extends ModScreen {
                 // Restore matches from cache
                 for (int i = 0; i < entries.size(); i++) {
                     ChecklistEntry entry = entries.get(i);
-                    entry.foundPieces.clear();
-                    entry.foundPieceUuids.clear();
-
                     ChecklistCache.StageMatches stageMatches = categoryCache.matchesByIndex.get(i);
                     if (stageMatches != null && stageMatches.calculated) {
                     // Restore each piece match
@@ -543,17 +568,16 @@ public class ArmorChecklistScreen extends ModScreen {
 
         categoryCache.isCalculating = false;
 
-        // Store in cache system
-        if (fadeDyeMode) {
-            cache.setFadeDyeOptimalCache(currentCategory, categoryCache);
-        } else {
-            cache.setNormalColorCache(currentCategory, categoryCache);
+        // The persisted cache represents the All view only; profile-specific results must not replace it.
+        if (allProfilesSelected) {
+            if (fadeDyeMode) {
+                cache.setFadeDyeOptimalCache(currentCategory, categoryCache);
+            } else {
+                cache.setNormalColorCache(currentCategory, categoryCache);
+            }
+            cache.save();
+            SeymourAnalyzer.LOGGER.info("Cached optimal matches for category: {}", currentCategory);
         }
-
-        // Save to disk
-        cache.save();
-
-        SeymourAnalyzer.LOGGER.info("Cached optimal matches for category: {}", currentCategory);
     }
 
     // Helper class for optimal matching
@@ -598,6 +622,16 @@ public class ArmorChecklistScreen extends ModScreen {
             .bounds(175, 10, 100, 20).build();
         this.addRenderableWidget(rememberBtn);
 
+        Button profileSelector = Button.builder(
+            Component.literal("Profile: " + SkyBlockProfileTracker.getProfileLabel(selectedProfileId)),
+            button -> {
+                profileDropdownOpen = !profileDropdownOpen;
+                this.rebuildWidgets();
+            })
+            .bounds(280, 10, 145, 20)
+            .build();
+        this.addRenderableWidget(profileSelector);
+
         // Piece filter toggle button (only shown in normal mode)
         if (!fadeDyeMode) {
             String filterLabel = pieceToPieceMode ? "§aPiece Filter: §aON" : "Piece Filter: §7OFF";
@@ -633,6 +667,20 @@ public class ArmorChecklistScreen extends ModScreen {
 
         // Category page buttons (bottom two rows)
         initPageButtons();
+        addProfileDropdownOptions();
+    }
+
+    private void addProfileDropdownOptions() {
+        if (!profileDropdownOpen) return;
+        for (Button option : ProfileDropdown.createOptions(280, 30, 145, selectedProfileId, profileId -> {
+            selectedProfileId = profileId;
+            profileDropdownOpen = false;
+            scrollOffset = 0;
+            calculateOptimalMatches();
+            this.rebuildWidgets();
+        })) {
+            this.addRenderableWidget(option);
+        }
     }
 
     private void initPageButtons() {
@@ -712,6 +760,9 @@ public class ArmorChecklistScreen extends ModScreen {
         if (pageOrder.isEmpty() || currentPage >= pageOrder.size()) {
             guiGraphics.text(this.font, "No checklist data loaded!", this.width / 2 - 70, this.height / 2, 0xFFFF5555);
             super.render(guiGraphics, mouseX, mouseY, delta);
+            if (profileDropdownOpen) {
+                ProfileDropdown.renderModal(guiGraphics, this.font, this.width, this.height, 280, 10, 145, 20, selectedProfileId);
+            }
             return;
         }
 
@@ -737,6 +788,9 @@ public class ArmorChecklistScreen extends ModScreen {
         guiGraphics.text(this.font, "§7Press §eESC §7to close | Click pages below to switch", this.width / 2 - 120, this.height - 10, 0xFFFFFFFF);
 
         super.render(guiGraphics, mouseX, mouseY, delta);
+        if (profileDropdownOpen) {
+            ProfileDropdown.renderModal(guiGraphics, this.font, this.width, this.height, 280, 10, 145, 20, selectedProfileId);
+        }
     }
 
     private void drawContextMenu(GuiGraphicsExtractor guiGraphics) {
@@ -933,6 +987,19 @@ public class ArmorChecklistScreen extends ModScreen {
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
+
+        if (profileDropdownOpen) {
+            if (button == 0) {
+                ProfileDropdown.getSelectedOption(mouseX, mouseY, 280, 10, 145, 20).ifPresent(profileId -> {
+                    selectedProfileId = profileId;
+                    scrollOffset = 0;
+                    calculateOptimalMatches();
+                });
+            }
+            profileDropdownOpen = false;
+            this.rebuildWidgets();
+            return true;
+        }
 
         // Check context menu clicks first
         if (contextMenu != null) {
@@ -1281,4 +1348,3 @@ public class ArmorChecklistScreen extends ModScreen {
         return false;
     }
 }
-

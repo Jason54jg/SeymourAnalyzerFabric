@@ -19,6 +19,7 @@ import schnerry.seymouranalyzer.data.ArmorPiece;
 import schnerry.seymouranalyzer.data.CollectionManager;
 import schnerry.seymouranalyzer.data.ColorDatabase;
 import schnerry.seymouranalyzer.util.ColorMath;
+import schnerry.seymouranalyzer.util.SkyBlockProfileTracker;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -58,7 +59,28 @@ public class DatabaseScreen extends ModScreen {
 
     // Filters
     private boolean showDupesOnly = false;
-    private boolean showFades = true;
+    private VisibilityMode fadesMode = VisibilityMode.SHOW;
+    private VisibilityMode customsMode = VisibilityMode.SHOW;
+    private String selectedProfileId = SkyBlockProfileTracker.ALL_PROFILES;
+    private boolean profileDropdownOpen;
+
+    private enum VisibilityMode {
+        SHOW,
+        HIDE,
+        ONLY;
+
+        private VisibilityMode next() {
+            return values()[(ordinal() + 1) % values().length];
+        }
+
+        private boolean includes(boolean matchesCategory) {
+            return switch (this) {
+                case SHOW -> true;
+                case HIDE -> !matchesCategory;
+                case ONLY -> matchesCategory;
+            };
+        }
+    }
 
     // Scrollbar dragging
     private boolean isDraggingScrollbar = false;
@@ -117,7 +139,8 @@ public class DatabaseScreen extends ModScreen {
     private static boolean savedSortAscending = true;
     private static int savedScrollOffset = 0;
     private static boolean savedShowDupesOnly = false;
-    private static boolean savedShowFades = true;
+    private static VisibilityMode savedFadesMode = VisibilityMode.SHOW;
+    private static VisibilityMode savedCustomsMode = VisibilityMode.SHOW;
 
     private void saveCurrentState() {
         savedSearchText    = activeTextSearch;
@@ -126,12 +149,14 @@ public class DatabaseScreen extends ModScreen {
         savedSortAscending = sortAscending;
         savedScrollOffset  = scrollOffset;
         savedShowDupesOnly = showDupesOnly;
-        savedShowFades     = showFades;
+        savedFadesMode     = fadesMode;
+        savedCustomsMode   = customsMode;
     }
 
     private void restoreSavedState() {
         showDupesOnly = savedShowDupesOnly;
-        showFades     = savedShowFades;
+        fadesMode     = savedFadesMode;
+        customsMode   = savedCustomsMode;
         sortColumn    = savedSortColumn;
         sortAscending = savedSortAscending;
         // Restore active search values
@@ -258,15 +283,25 @@ public class DatabaseScreen extends ModScreen {
             .bounds(175, 10, 100, 20).build();
         this.addRenderableWidget(rememberBtn);
 
+        Button profileSelector = Button.builder(
+            Component.literal("Profile: " + SkyBlockProfileTracker.getProfileLabel(selectedProfileId)),
+            button -> {
+                profileDropdownOpen = !profileDropdownOpen;
+                this.rebuildWidgets();
+            })
+            .bounds(280, 10, 145, 20)
+            .build();
+        this.addRenderableWidget(profileSelector);
+
         // Word matches button (bottom right)
         Button wordButton = Button.builder(Component.literal("§lWord Matches"),
-            button -> this.minecraft.gui.setScreen(new WordMatchesScreen(this)))
+            button -> this.minecraft.gui.setScreen(new WordMatchesScreen(this, selectedProfileId)))
             .bounds(this.width - 140, this.height - 60, 120, 20).build();
         this.addRenderableWidget(wordButton);
 
         // Pattern matches button (above word button)
         Button patternButton = Button.builder(Component.literal("§lPattern Matches"),
-            button -> this.minecraft.gui.setScreen(new PatternMatchesScreen(this)))
+            button -> this.minecraft.gui.setScreen(new PatternMatchesScreen(this, selectedProfileId)))
             .bounds(this.width - 140, this.height - 35, 120, 20).build();
         this.addRenderableWidget(patternButton);
 
@@ -287,13 +322,23 @@ public class DatabaseScreen extends ModScreen {
             this.addRenderableWidget(copyDupesButton);
         }
 
-        // Fades filter button (next to dupes / copy dupes)
+        // Fade filter mode button (Show -> Hide -> Only)
         int fadesX = showDupesOnly ? 200 : 110;
-        Button fadesButton = Button.builder(Component.literal("Show Fades"), button -> {
-            showFades = !showFades;
+        Button fadesButton = Button.builder(Component.literal("Fades: " + fadesMode), button -> {
+            fadesMode = fadesMode.next();
             filterAndSort();
+            this.rebuildWidgets();
         }).bounds(fadesX, this.height - 35, 85, 20).build();
         this.addRenderableWidget(fadesButton);
+
+        // Custom filter mode button (Show -> Hide -> Only)
+        int customsX = fadesX + 90;
+        Button customsButton = Button.builder(Component.literal("Customs: " + customsMode), button -> {
+            customsMode = customsMode.next();
+            filterAndSort();
+            this.rebuildWidgets();
+        }).bounds(customsX, this.height - 35, 115, 20).build();
+        this.addRenderableWidget(customsButton);
 
         // Apply pending hex search if set (from guiGraphics menu in other screens)
         if (pendingHexSearch != null) {
@@ -370,6 +415,7 @@ public class DatabaseScreen extends ModScreen {
             int maxScroll = Math.max(0, filteredPieces.size() - Math.max(1, (this.height - START_Y - 40) / ROW_HEIGHT));
             scrollOffset = Math.min(savedScrollOffset, maxScroll);
         }
+
     }
 
     @Override
@@ -522,6 +568,7 @@ public class DatabaseScreen extends ModScreen {
             // DON'T return early - still need to render widgets!
             // Render widgets so buttons still work
             super.render(guiGraphics, mouseX, mouseY, delta);
+            renderProfileDropdownOverlay(guiGraphics, mouseX, mouseY);
             return;
         }
 
@@ -633,6 +680,34 @@ public class DatabaseScreen extends ModScreen {
                 textY += lineHeight;
             }
         }
+
+        renderProfileDropdownOverlay(guiGraphics, mouseX, mouseY);
+    }
+
+    private void renderProfileDropdownOverlay(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
+        if (!profileDropdownOpen) return;
+
+        guiGraphics.fill(0, 0, this.width, this.height, 0x90000000);
+
+        int x = 280;
+        int y = 10;
+        int width = 145;
+        drawProfileDropdownButton(guiGraphics, x, y, width,
+            "Profile: " + SkyBlockProfileTracker.getProfileLabel(selectedProfileId), false);
+
+        int optionY = y + 20;
+        for (String profileId : SkyBlockProfileTracker.getProfileOptions()) {
+            String label = SkyBlockProfileTracker.getProfileLabel(profileId);
+            drawProfileDropdownButton(guiGraphics, x, optionY, width, label, profileId.equals(selectedProfileId));
+            optionY += 20;
+        }
+    }
+
+    private void drawProfileDropdownButton(GuiGraphicsExtractor guiGraphics, int x, int y, int width,
+                                           String label, boolean selected) {
+        guiGraphics.fill(x, y, x + width, y + 20, 0xFF808080);
+        guiGraphics.fill(x + 1, y + 1, x + width - 1, y + 19, 0xFF303030);
+        guiGraphics.centeredText(this.font, selected ? "\u00a7a" + label : label, x + width / 2, y + 6, 0xFFFFFFFF);
     }
 
     private void drawPieceRow(GuiGraphicsExtractor guiGraphics, ArmorPiece piece, int y) {
@@ -787,9 +862,13 @@ public class DatabaseScreen extends ModScreen {
         for (int i = 0; i < numMatches; i++) {
             ArmorPiece.ColorMatch match = matches.get(i);
             boolean isFade = checkFadeDye(match.colorName);
+            boolean isCustom = ClothConfig.getInstance().getCustomColors().containsKey(match.colorName);
 
-            // Skip fade dyes if showFades is false
-            if (!showFades && isFade) {
+            if (!fadesMode.includes(isFade)) {
+                continue;
+            }
+
+            if (!customsMode.includes(isCustom)) {
                 continue;
             }
 
@@ -1095,6 +1174,12 @@ public class DatabaseScreen extends ModScreen {
         // Start with all pieces
         List<ArmorPiece> result = new ArrayList<>(allPieces);
 
+        if (!SkyBlockProfileTracker.ALL_PROFILES.equals(selectedProfileId)) {
+            result = result.stream()
+                .filter(piece -> selectedProfileId.equals(piece.getProfileId()))
+                .collect(Collectors.toList());
+        }
+
         // Apply dupes filter first if enabled
         if (showDupesOnly) {
             Map<String, Integer> hexCounts = new HashMap<>();
@@ -1108,15 +1193,18 @@ public class DatabaseScreen extends ModScreen {
                 .collect(Collectors.toList());
         }
 
-        // Apply fades filter
-        if (!showFades) {
-            result = result.stream()
-                .filter(piece -> {
-                    if (piece.getBestMatch() == null) return true;
-                    return !checkFadeDye(piece.getBestMatch().colorName);
-                })
-                .collect(Collectors.toList());
-        }
+        Map<String, String> customColors = ClothConfig.getInstance().getCustomColors();
+        result = result.stream()
+            .filter(piece -> {
+                if (piece.getBestMatch() == null) {
+                    return fadesMode != VisibilityMode.ONLY && customsMode != VisibilityMode.ONLY;
+                }
+
+                boolean isFade = checkFadeDye(piece.getBestMatch().colorName);
+                boolean isCustom = customColors.containsKey(piece.getBestMatch().colorName);
+                return fadesMode.includes(isFade) && customsMode.includes(isCustom);
+            })
+            .collect(Collectors.toList());
 
         // Apply text search filter
         String searchText = searchField != null ? searchField.getValue() : "";
@@ -1315,9 +1403,9 @@ public class DatabaseScreen extends ModScreen {
         for (int i = 0; i < numMatches; i++) {
             ArmorPiece.ColorMatch match = matches.get(i);
             boolean isFade = checkFadeDye(match.colorName);
+            boolean isCustom = ClothConfig.getInstance().getCustomColors().containsKey(match.colorName);
 
-            // Only count this line if it will be shown (respecting showFades filter)
-            if (showFades || !isFade) {
+            if (fadesMode.includes(isFade) && customsMode.includes(isCustom)) {
                 visibleLines++;
             }
         }
@@ -1330,6 +1418,11 @@ public class DatabaseScreen extends ModScreen {
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
+
+        if (profileDropdownOpen) {
+            handleProfileDropdownClick(mouseX, mouseY, button);
+            return true;
+        }
 
         // Check text fields first (highest priority for clicks)
         if (searchField != null && searchField.mouseClicked(click, isOutOfBounds)) {
@@ -1422,6 +1515,32 @@ public class DatabaseScreen extends ModScreen {
         return super.mouseClicked(click, isOutOfBounds);
     }
 
+    private void handleProfileDropdownClick(double mouseX, double mouseY, int button) {
+        if (button != 0) return;
+
+        int x = 280;
+        int y = 10;
+        int width = 145;
+        if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY < y + 20) {
+            profileDropdownOpen = false;
+            this.rebuildWidgets();
+            return;
+        }
+
+        List<String> profileOptions = SkyBlockProfileTracker.getProfileOptions();
+        int optionsY = y + 20;
+        if (mouseX >= x && mouseX <= x + width
+                && mouseY >= optionsY && mouseY < optionsY + profileOptions.size() * 20) {
+            int optionIndex = ((int) mouseY - optionsY) / 20;
+            selectedProfileId = profileOptions.get(optionIndex);
+            scrollOffset = 0;
+            filterAndSort();
+        }
+
+        profileDropdownOpen = false;
+        this.rebuildWidgets();
+    }
+
     @Override
     public boolean keyPressed(KeyEvent keyEvent) {
         if (searchField != null && searchField.keyPressed(keyEvent)) {
@@ -1497,4 +1616,3 @@ public class DatabaseScreen extends ModScreen {
         return false;
     }
 }
-
