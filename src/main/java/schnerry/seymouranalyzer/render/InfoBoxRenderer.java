@@ -327,35 +327,35 @@ public class InfoBoxRenderer {
             return new ChecklistStatus(false, false, Integer.MAX_VALUE);
         }
 
+        boolean isNeeded = false;
+
         for (ChecklistCache.CategoryCache categoryCache : cache.getNormalColorCache().values()) {
-            if (categoryCache.matchesByIndex != null) {
-                for (ChecklistCache.StageMatches stageMatches : categoryCache.matchesByIndex.values()) {
-                    if (stageMatches.stageHex != null && stageMatches.stageHex.equalsIgnoreCase(hexUpper)) {
-                        ChecklistCache.MatchInfo matchInfo = getMatchForPieceType(stageMatches, pieceType);
-                        if (matchInfo != null) {
-                            return new ChecklistStatus(true, true, getTierFromMatch(matchInfo));
-                        }
-                        return new ChecklistStatus(false, true, Integer.MAX_VALUE);
+            if (categoryCache.matchesByIndex == null) continue;
+            for (ChecklistCache.StageMatches stageMatches : categoryCache.matchesByIndex.values()) {
+                if (stageMatches.stageHex != null && stageMatches.stageHex.equalsIgnoreCase(hexUpper)) {
+                    isNeeded = true;
+                    ChecklistCache.MatchInfo matchInfo = getMatchForPieceType(stageMatches, pieceType);
+                    if (matchInfo != null) {
+                        return new ChecklistStatus(true, true, getChecklistTier(matchInfo));
                     }
                 }
             }
         }
 
         for (ChecklistCache.CategoryCache categoryCache : cache.getFadeDyeOptimalCache().values()) {
-            if (categoryCache.matchesByIndex != null) {
-                for (ChecklistCache.StageMatches stageMatches : categoryCache.matchesByIndex.values()) {
-                    if (stageMatches.stageHex != null && stageMatches.stageHex.equalsIgnoreCase(hexUpper)) {
-                        ChecklistCache.MatchInfo matchInfo = getMatchForPieceType(stageMatches, pieceType);
-                        if (matchInfo != null) {
-                            return new ChecklistStatus(true, true, getTierFromMatch(matchInfo));
-                        }
-                        return new ChecklistStatus(false, true, Integer.MAX_VALUE);
+            if (categoryCache.matchesByIndex == null) continue;
+            for (ChecklistCache.StageMatches stageMatches : categoryCache.matchesByIndex.values()) {
+                if (stageMatches.stageHex != null && stageMatches.stageHex.equalsIgnoreCase(hexUpper)) {
+                    isNeeded = true;
+                    ChecklistCache.MatchInfo matchInfo = getMatchForPieceType(stageMatches, pieceType);
+                    if (matchInfo != null) {
+                        return new ChecklistStatus(true, true, getChecklistTier(matchInfo));
                     }
                 }
             }
         }
 
-        return new ChecklistStatus(false, false, Integer.MAX_VALUE);
+        return new ChecklistStatus(false, isNeeded, Integer.MAX_VALUE);
     }
 
     private static ChecklistCache.MatchInfo getMatchForPieceType(ChecklistCache.StageMatches stageMatches, String pieceType) {
@@ -368,12 +368,9 @@ public class InfoBoxRenderer {
         };
     }
 
-    private static int getTierFromMatch(ChecklistCache.MatchInfo matchInfo) {
-        if (matchInfo == null || matchInfo.hex == null) return Integer.MAX_VALUE;
-        ColorAnalyzer.AnalysisResult analysis = ColorAnalyzer.getInstance().analyzeArmorColor(matchInfo.hex, matchInfo.name);
-        if (analysis != null) {
-            return analysis.tier();
-        }
+    private static int getChecklistTier(ChecklistCache.MatchInfo matchInfo) {
+        if (matchInfo.deltaE <= 2.0) return 1;
+        if (matchInfo.deltaE <= 5.0) return 2;
         return Integer.MAX_VALUE;
     }
 
@@ -808,4 +805,3 @@ public class InfoBoxRenderer {
         };
     }
 }
-

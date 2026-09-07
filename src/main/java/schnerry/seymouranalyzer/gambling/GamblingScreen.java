@@ -42,13 +42,18 @@ public class GamblingScreen extends Screen {
     private boolean dingPlayed      = false;
 
     public GamblingScreen() {
-        this(-1, null);
+        this(-1, null, RollStatsManager.Source.COMMAND);
     }
 
     public GamblingScreen(int winnerRgb, net.minecraft.world.item.Item winnerItem) {
+        this(winnerRgb, winnerItem, RollStatsManager.Source.VISITOR);
+    }
+
+    public GamblingScreen(int winnerRgb, net.minecraft.world.item.Item winnerItem, RollStatsManager.Source source) {
         super(Component.literal("Seymour Roll"));
         strip  = GamblingRoller.buildRollStrip(STRIP_COUNT, WINNER_INDEX, winnerRgb, winnerItem);
         winner = strip.get(WINNER_INDEX);
+        RollStatsManager.getInstance().record(winner, source);
     }
 
     public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
@@ -220,7 +225,7 @@ public class GamblingScreen extends Screen {
         int lineH = 14;
         int ty    = py + 16;
 
-        String itemName = getPieceTypeName(winner);
+        String itemName = GamblingRoller.getPieceTypeName(winner);
         String rareName = GamblingRoller.getRarityName(winner);
         String hexStr   = GamblingRoller.getHexString(winner);
 
@@ -301,15 +306,6 @@ public class GamblingScreen extends Screen {
         g.fill(x + w - 1, y,         x + w, y + h,     border);
     }
 
-    private String getPieceTypeName(ItemStack stack) {
-        net.minecraft.world.item.Item item = stack.getItem();
-        if (item == net.minecraft.world.item.Items.LEATHER_HELMET)     return "Velvet Top Hat";
-        if (item == net.minecraft.world.item.Items.LEATHER_CHESTPLATE) return "Cashmere Jacket";
-        if (item == net.minecraft.world.item.Items.LEATHER_LEGGINGS)   return "Satin Trousers";
-        if (item == net.minecraft.world.item.Items.LEATHER_BOOTS)      return "Oxford Shoes";
-        return stack.getHoverName().getString();
-    }
-
     @Override
     public boolean isPauseScreen() {
         return false;
@@ -324,4 +320,3 @@ public class GamblingScreen extends Screen {
         return false;
     }
 }
-

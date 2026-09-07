@@ -62,7 +62,7 @@ public class VisitorChatListener {
             mc.gui.setScreen(new GamblingScreen(piece.rgb, piece.item));
         } else {
             SeymourAnalyzer.LOGGER.info("[Gambling] No Seymour piece found, random roll");
-            mc.gui.setScreen(new GamblingScreen());
+            mc.gui.setScreen(new GamblingScreen(-1, null, RollStatsManager.Source.VISITOR));
         }
     }
 

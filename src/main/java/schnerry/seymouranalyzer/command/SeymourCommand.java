@@ -121,9 +121,13 @@ public class SeymourCommand {
                 .then(literal("sure")
                     .executes(SeymourCommand::clearCollection)))
 
-            // /seymour stats
+            // /seymour stats [profile <profile>]
             .then(literal("stats")
-                .executes(SeymourCommand::showStats))
+                .executes(SeymourCommand::showStats)
+                .then(literal("profile")
+                    .then(argument("profile", StringArgumentType.greedyString())
+                        .suggests(PROFILE_SUGGESTIONS)
+                        .executes(SeymourCommand::showProfileStats))))
 
             // /seymour resetpos
             .then(literal("resetpos")
@@ -198,9 +202,11 @@ public class SeymourCommand {
             .then(literal("config")
                 .executes(SeymourCommand::openConfigGUI))
 
-            // /seymour roll - open gambling roll screen
+            // /seymour roll [stats] - open gambling roll screen or statistics
             .then(literal("roll")
-                .executes(SeymourCommand::openRollScreen))
+                .executes(SeymourCommand::openRollScreen)
+                .then(literal("stats")
+                    .executes(SeymourCommand::openRollStatsGUI)))
 
             // /seymour priorities - open priority editor GUI
             .then(literal("priorities")
@@ -427,10 +433,6 @@ public class SeymourCommand {
                 ctx.getSource().sendFeedback(Component.literal("§a[Seymour Analyzer] §7DB Compare (Shift tooltip) " +
                     (config.isDbCompareEnabled() ? "§aenabled" : "§cdisabled") + "§7!"));
                 break;
-            case "dbcompareonlydiffpieces":
-                config.setDbCompareOnlyDiffPieces(!config.isDbCompareOnlyDiffPieces());
-                ctx.getSource().sendFeedback(Component.literal("§a[Seymour Analyzer] §7DB Compare Only Different Pieces " +
-                    (config.isDbCompareOnlyDiffPieces() ? "§aenabled" : "§cdisabled") + "§7!"));
             case "autopin":
                 config.setAutoPinGui(!config.isAutoPinGui());
                 // Sync static fields in both screens
@@ -471,7 +473,6 @@ public class SeymourCommand {
         ctx.getSource().sendFeedback(Component.literal("  §ehexcolor §8- " + getToggleIndicator(config.isColoredHexText()) + " §7Toggle colored hex text"));
         ctx.getSource().sendFeedback(Component.literal("  §eautoroll §8- " + getToggleIndicator(config.isAutoRollOnVisitor()) + " §7Toggle auto roll on Seymour visitor"));
         ctx.getSource().sendFeedback(Component.literal("  §edbcompare §8- " + getToggleIndicator(config.isDbCompareEnabled()) + " §7Toggle DB Compare in shift tooltip"));
-        ctx.getSource().sendFeedback(Component.literal("  §edbcompareonlydiff §8- " + getToggleIndicator(config.isDbCompareOnlyDiffPieces()) + " §7When DB Compare is enabled, only show different pieces"));
         ctx.getSource().sendFeedback(Component.literal("  §eautopin §8- " + getToggleIndicator(config.isAutoPinGui()) + " §7Auto set Pin Toggle in GUI (always remembers position)"));
         return 0;
     }
@@ -704,9 +705,43 @@ public class SeymourCommand {
 
     private static int showStats(CommandContext<FabricClientCommandSource> ctx) {
         Map<String, ArmorPiece> collection = CollectionManager.getInstance().getCollection();
+        return showStats(ctx, collection, null);
+    }
+
+    private static int showProfileStats(CommandContext<FabricClientCommandSource> ctx) {
+        String requestedProfile = StringArgumentType.getString(ctx, "profile").trim();
+        List<String> matchingProfileIds = SkyBlockProfileTracker.getKnownProfiles().keySet().stream()
+            .filter(profileId -> profileId.equalsIgnoreCase(requestedProfile)
+                || SkyBlockProfileTracker.getProfileLabel(profileId).equalsIgnoreCase(requestedProfile))
+            .toList();
+
+        if (matchingProfileIds.isEmpty()) {
+            ctx.getSource().sendError(Component.literal("§c[Seymour] Unknown profile: §f" + requestedProfile));
+            return 0;
+        }
+        if (matchingProfileIds.size() > 1) {
+            ctx.getSource().sendError(Component.literal(
+                "§c[Seymour] Multiple profiles use that name. Set a custom name with /seymour profiles set <name>."
+            ));
+            return 0;
+        }
+
+        String profileId = matchingProfileIds.getFirst();
+        Map<String, ArmorPiece> profileCollection = new LinkedHashMap<>();
+        for (Map.Entry<String, ArmorPiece> entry : CollectionManager.getInstance().getCollection().entrySet()) {
+            if (profileId.equals(entry.getValue().getProfileId())) {
+                profileCollection.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return showStats(ctx, profileCollection, SkyBlockProfileTracker.getProfileLabel(profileId));
+    }
+
+    private static int showStats(CommandContext<FabricClientCommandSource> ctx, Map<String, ArmorPiece> collection,
+                                 String profileName) {
 
         if (collection.isEmpty()) {
-            ctx.getSource().sendFeedback(Component.literal("§a[Seymour Analyzer] §7Collection is empty! Start scanning to add pieces."));
+            String scope = profileName == null ? "Collection" : "Profile " + profileName;
+            ctx.getSource().sendFeedback(Component.literal("§a[Seymour Analyzer] §7" + scope + " is empty!"));
             return 1;
         }
 
@@ -780,7 +815,8 @@ public class SeymourCommand {
 
         // Display statistics
         ctx.getSource().sendFeedback(Component.literal("§8§m----------------------------------------------------"));
-        ctx.getSource().sendFeedback(Component.literal("§a§l[Seymour Analyzer] §7- Collection Statistics"));
+        String title = profileName == null ? "Collection Statistics" : "Profile Statistics: §e" + profileName;
+        ctx.getSource().sendFeedback(Component.literal("§a§l[Seymour Analyzer] §7- " + title));
         ctx.getSource().sendFeedback(Component.literal("§7Total Pieces: §e" + collection.size()));
         ctx.getSource().sendFeedback(Component.literal(""));
 
@@ -1151,6 +1187,11 @@ public class SeymourCommand {
             ctx.getSource().sendError(Component.literal("§a[Seymour Analyzer] §cError: " + e.getMessage()));
             return reportCommandError(ctx, "opening roll screen", e);
         }
+        return 1;
+    }
+
+    private static int openRollStatsGUI(CommandContext<FabricClientCommandSource> ctx) {
+        runOnClientThread(() -> Minecraft.getInstance().gui.setScreen(new RollStatsScreen(null)));
         return 1;
     }
 

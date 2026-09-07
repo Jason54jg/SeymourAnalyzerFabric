@@ -82,26 +82,18 @@ public class ConfigScreen {
                 .setSaveConsumer(config::setColoredHexText)
                 .build());
 
-        analysisCategory.addEntry(entryBuilder.startBooleanToggle(
-                Component.literal("DB Compare (Shift)"),
+        // DB Compare Category
+        ConfigCategory dbCompareCategory = builder.getOrCreateCategory(Component.literal("DB Compare"));
+
+        dbCompareCategory.addEntry(entryBuilder.startBooleanToggle(
+                Component.literal("Enabled"),
                 config.isDbCompareEnabled())
                 .setDefaultValue(true)
                 .setTooltip(Component.literal("When holding Shift on a Seymour piece, show the 3 closest pieces from your database by ΔE"))
                 .setSaveConsumer(config::setDbCompareEnabled)
                 .build());
 
-        analysisCategory.addEntry(entryBuilder.startBooleanToggle(
-                Component.literal("DB Compare only Different Pieces"),
-                config.isDbCompareOnlyDiffPieces())
-                .setDefaultValue(false)
-                .setTooltip(Component.literal("When enabled, the DB Compare (Shift) feature will only show pieces that are different from the one you're hovering over."))
-                .setSaveConsumer(value -> {
-                    config.setDbCompareOnlyDiffPieces(value);
-                    schnerry.seymouranalyzer.render.HexTooltipRenderer.getInstance().clearDbCache();
-                })
-                .build());
-
-        analysisCategory.addEntry(entryBuilder.startBooleanToggle(
+        dbCompareCategory.addEntry(entryBuilder.startBooleanToggle(
                 Component.literal("DB Compare Current Profile Only"),
                 config.isDbCompareCurrentProfileOnly())
                 .setDefaultValue(false)
@@ -112,7 +104,7 @@ public class ConfigScreen {
                 })
                 .build());
 
-        analysisCategory.addEntry(entryBuilder.startEnumSelector(
+        dbCompareCategory.addEntry(entryBuilder.startEnumSelector(
                 Component.literal("DB Compare Mode"),
                 DBCompareMode.class,
                 config.getDbCompareMode())

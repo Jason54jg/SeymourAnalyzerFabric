@@ -284,6 +284,15 @@ public class GamblingRoller {
         return rc != null ? rc.closestName() : "Unknown";
     }
 
+    public static String getPieceTypeName(ItemStack stack) {
+        Item item = stack.getItem();
+        if (item == Items.LEATHER_HELMET) return "Velvet Top Hat";
+        if (item == Items.LEATHER_CHESTPLATE) return "Cashmere Jacket";
+        if (item == Items.LEATHER_LEGGINGS) return "Satin Trousers";
+        if (item == Items.LEATHER_BOOTS) return "Oxford Shoes";
+        return stack.getHoverName().getString();
+    }
+
     public static Tier getTier(ItemStack stack) {
         RollColor rc = getRollColor(stack);
         return rc != null ? rc.tier() : Tier.UNKNOWN;

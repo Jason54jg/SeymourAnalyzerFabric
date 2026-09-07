@@ -80,9 +80,6 @@ public class ClothConfig {
     private boolean dbCompareEnabled = true;
     @Getter
     @Setter
-    private boolean dbCompareOnlyDiffPieces = false;
-    @Getter
-    @Setter
     private boolean dbCompareCurrentProfileOnly = false;
     @Getter
     private DBCompareMode dbCompareMode = DBCompareMode.NORMAL;
@@ -176,9 +173,9 @@ public class ClothConfig {
                 if (json.has("showHighFakes")) showHighFakes = json.get("showHighFakes").getAsBoolean();
                 if (json.has("itemFramesEnabled")) itemFramesEnabled = json.get("itemFramesEnabled").getAsBoolean();
                 if (json.has("scanOnlyOwnIsland")) scanOnlyOwnIsland = json.get("scanOnlyOwnIsland").getAsBoolean();
+                if (json.has("seymourOnlyHex")) seymourOnlyHex = json.get("seymourOnlyHex").getAsBoolean();
                 if (json.has("coloredHexText")) coloredHexText = json.get("coloredHexText").getAsBoolean();
                 if (json.has("dbCompareEnabled")) dbCompareEnabled = json.get("dbCompareEnabled").getAsBoolean();
-                if (json.has("dbCompareOnlyDiffPieces")) dbCompareOnlyDiffPieces = json.get("dbCompareOnlyDiffPieces").getAsBoolean();
                 if (json.has("dbCompareCurrentProfileOnly")) dbCompareCurrentProfileOnly = json.get("dbCompareCurrentProfileOnly").getAsBoolean();
                 if (json.has("dbCompareMode")) dbCompareMode = parseDbCompareMode(json.get("dbCompareMode").getAsString());
                 if (json.has("autoRollOnVisitor")) autoRollOnVisitor = json.get("autoRollOnVisitor").getAsBoolean();
@@ -282,7 +279,6 @@ public class ClothConfig {
             json.addProperty("seymourOnlyHex", seymourOnlyHex);
             json.addProperty("coloredHexText", coloredHexText);
             json.addProperty("dbCompareEnabled", dbCompareEnabled);
-            json.addProperty("dbCompareOnlyDiffPieces", dbCompareOnlyDiffPieces);
             json.addProperty("dbCompareCurrentProfileOnly", dbCompareCurrentProfileOnly);
             json.addProperty("dbCompareMode", dbCompareMode.name().toLowerCase(Locale.ROOT));
             json.addProperty("autoRollOnVisitor", autoRollOnVisitor);
@@ -431,7 +427,5 @@ public class ClothConfig {
 
     public void setDbCompareMode(DBCompareMode mode) {
         this.dbCompareMode = mode != null ? mode : DBCompareMode.NORMAL;
-        // Keep legacy toggle behavior in sync with mode selection
-        this.dbCompareOnlyDiffPieces = this.dbCompareMode == DBCompareMode.DIFFERENT;
     }
 }
