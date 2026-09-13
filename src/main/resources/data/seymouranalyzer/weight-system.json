@@ -378,5 +378,147 @@
       "ifFake": 50.0,
       "comment": ""
     }
+  ],
+  "wordBonuses": [
+    {
+      "word": "ACE",
+      "weight": 0.3
+    },
+    {
+      "word": "ADD",
+      "weight": 0.3
+    },
+    {
+      "word": "BAD",
+      "weight": 0.3
+    },
+    {
+      "word": "BED",
+      "weight": 0.3
+    },
+    {
+      "word": "BEE",
+      "weight": 0.3
+    },
+    {
+      "word": "CAB",
+      "weight": 0.3
+    },
+    {
+      "word": "CAD",
+      "weight": 0.3
+    },
+    {
+      "word": "DAB",
+      "weight": 0.3
+    },
+    {
+      "word": "DAD",
+      "weight": 0.3
+    },
+    {
+      "word": "FED",
+      "weight": 0.3
+    },
+    {
+      "word": "FEE",
+      "weight": 0.3
+    },
+    {
+      "word": "ACED",
+      "weight": 10.0
+    },
+    {
+      "word": "BABE",
+      "weight": 10.0
+    },
+    {
+      "word": "BEAD",
+      "weight": 10.0
+    },
+    {
+      "word": "BEEF",
+      "weight": 10.0
+    },
+    {
+      "word": "CAFE",
+      "weight": 10.0
+    },
+    {
+      "word": "DEAD",
+      "weight": 10.0
+    },
+    {
+      "word": "DEAF",
+      "weight": 10.0
+    },
+    {
+      "word": "DEED",
+      "weight": 10.0
+    },
+    {
+      "word": "FACE",
+      "weight": 10.0
+    },
+    {
+      "word": "FADE",
+      "weight": 10.0
+    },
+    {
+      "word": "FEED",
+      "weight": 10.0
+    },
+    {
+      "word": "ADDED",
+      "weight": 25.0
+    },
+    {
+      "word": "CEDED",
+      "weight": 25.0
+    },
+    {
+      "word": "DECAF",
+      "weight": 25.0
+    },
+    {
+      "word": "FACED",
+      "weight": 25.0
+    },
+    {
+      "word": "FADED",
+      "weight": 25.0
+    },
+    {
+      "word": "DECADE",
+      "weight": 50.0
+    },
+    {
+      "word": "FACADE",
+      "weight": 50.0
+    },
+    {
+      "word": "DEFACE",
+      "weight": 50.0
+    },
+    {
+      "word": "BEADED",
+      "weight": 50.0
+    },
+    {
+      "word": "DABBED",
+      "weight": 50.0
+    },
+    {
+      "word": "BEDDED",
+      "weight": 50.0
+    },
+    {
+      "word": "BEEFED",
+      "weight": 50.0
+    },
+    {
+      "word": "DEEDED",
+      "weight": 50.0
+    }
   ]
 }

@@ -34,8 +34,10 @@ public final class WeightScreen extends ModScreen {
     private volatile int calculationProgress;
     private volatile WeightCalculator.Result result;
     private int scrollOffset;
+    private int pieceBonusScrollOffset;
     private ViewMode viewMode = ViewMode.PIECES;
     private boolean draggingScrollbar;
+    private boolean draggingPieceBonusScrollbar;
     private String sortColumn = "weight";
     private boolean sortAscending;
     private EditBox pieceSearchField;
@@ -70,6 +72,7 @@ public final class WeightScreen extends ModScreen {
             button -> {
                 viewMode = viewMode == ViewMode.PIECES ? ViewMode.SUMMARY : ViewMode.PIECES;
                 scrollOffset = 0;
+                pieceBonusScrollOffset = 0;
                 rebuildWidgets();
             }).bounds(155, 10, 125, 20).build());
         if (viewMode == ViewMode.PIECES) {
@@ -89,6 +92,7 @@ public final class WeightScreen extends ModScreen {
             profileDropdownOpen = false;
             result = cachedResultForCurrentCollection();
             scrollOffset = 0;
+            pieceBonusScrollOffset = 0;
             rebuildWidgets();
         })) addRenderableWidget(option);
     }
@@ -217,11 +221,16 @@ public final class WeightScreen extends ModScreen {
         List<WeightCalculator.Breakdown> pieceBonuses = summaryRows(WeightCalculator.ContributionType.PIECE_BONUS);
         List<WeightCalculator.Breakdown> collectionBonuses = summaryRows(WeightCalculator.ContributionType.COLLECTION_BONUS);
         drawSummarySection(graphics, 20, columnWidth, "Base Rules", baseRules, scrollOffset, visible, 0xFFFFFFFF);
-        drawSummarySection(graphics, 40 + columnWidth, columnWidth, "Piece Bonuses", pieceBonuses, 0, visible, 0xFF55FF55);
+        pieceBonusScrollOffset = Math.clamp(pieceBonusScrollOffset, 0, Math.max(0, pieceBonuses.size() - visible));
+        drawSummarySection(graphics, 40 + columnWidth, columnWidth, "Piece Bonuses", pieceBonuses, pieceBonusScrollOffset, visible, 0xFF55FF55);
         drawSummarySection(graphics, 60 + columnWidth * 2, columnWidth, "Collection Bonuses", collectionBonuses, 0, visible, 0xFF55FF55);
         if (baseRules.size() > visible) {
             ScrollbarRenderer.renderVerticalScrollbar(graphics, currentScrollbarX(), START_Y, visible * ROW_HEIGHT,
                 scrollOffset, baseRules.size(), visible);
+        }
+        if (pieceBonuses.size() > visible) {
+            ScrollbarRenderer.renderVerticalScrollbar(graphics, pieceBonusScrollbarX(columnWidth), START_Y, visible * ROW_HEIGHT,
+                pieceBonusScrollOffset, pieceBonuses.size(), visible);
         }
         graphics.centeredText(font, "Base rules: " + (scrollOffset + 1) + "-" + Math.min(scrollOffset + visible, baseRules.size())
             + " of " + baseRules.size(), width / 2, height - 25, 0xFF888888);
@@ -237,8 +246,8 @@ public final class WeightScreen extends ModScreen {
         for (int i = 0; i < visible && offset + i < rows.size(); i++) {
             WeightCalculator.Breakdown row = rows.get(offset + i);
             int y = START_Y + i * ROW_HEIGHT;
-            graphics.text(font, trim(row.name(), 23), x + 8, y + 3, 0xFFFFFFFF);
             String score = String.format("%.1f", row.weight());
+            graphics.text(font, trimToWidth(row.name(), sectionWidth - 22 - font.width(score)), x + 8, y + 3, 0xFFFFFFFF);
             graphics.text(font, score, x + sectionWidth - font.width(score) - 8, y + 3, weightColor);
             double each = row.weight() / contributionCount(row.detail());
             graphics.text(font, row.detail() + " x " + String.format("%.1f", each), x + 8, y + 13, 0xFF888888);
@@ -300,6 +309,13 @@ public final class WeightScreen extends ModScreen {
         }
         return Pattern.compile(regex.append("$").toString());
     }
+    private String trimToWidth(String text, int maximumWidth) {
+        if (font.width(text) <= maximumWidth) return text;
+        String ellipsis = "…";
+        int end = text.length();
+        while (end > 0 && font.width(text.substring(0, end) + ellipsis) > maximumWidth) end--;
+        return text.substring(0, end) + ellipsis;
+    }
     private static String trim(String text, int limit) { return text.length() <= limit ? text : text.substring(0, limit - 1) + "…"; }
     private boolean isShiftHeld() {
         Window window = minecraft.getWindow();
@@ -307,7 +323,18 @@ public final class WeightScreen extends ModScreen {
             || InputConstants.isKeyDown(window, GLFW.GLFW_KEY_RIGHT_SHIFT);
     }
     @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
-        if (result != null) { int visible = Math.max(1, (height - START_Y - FOOTER_HEIGHT - (viewMode == ViewMode.SUMMARY ? 20 : 0)) / ROW_HEIGHT); int count = rowCount(); int max = Math.max(0, count - visible); scrollOffset = Math.clamp(scrollOffset + (vertical < 0 ? 1 : -1), 0, max); return true; }
+        if (result != null) {
+            int visible = Math.max(1, (height - START_Y - FOOTER_HEIGHT - (viewMode == ViewMode.SUMMARY ? 20 : 0)) / ROW_HEIGHT);
+            int delta = vertical < 0 ? 1 : -1;
+            if (viewMode == ViewMode.SUMMARY && x >= 40 + summaryColumnWidth() && x < 40 + summaryColumnWidth() * 2) {
+                int max = Math.max(0, summaryRows(WeightCalculator.ContributionType.PIECE_BONUS).size() - visible);
+                pieceBonusScrollOffset = Math.clamp(pieceBonusScrollOffset + delta, 0, max);
+            } else {
+                int max = Math.max(0, rowCount() - visible);
+                scrollOffset = Math.clamp(scrollOffset + delta, 0, max);
+            }
+            return true;
+        }
         return super.mouseScrolled(x, y, horizontal, vertical);
     }
     @Override public boolean mouseClicked(MouseButtonEvent click, boolean outOfBounds) {
@@ -330,6 +357,12 @@ public final class WeightScreen extends ModScreen {
         }
         if (result != null && click.button() == 0) {
             int visible = Math.max(1, (height - START_Y - FOOTER_HEIGHT - (viewMode == ViewMode.SUMMARY ? 20 : 0)) / ROW_HEIGHT);
+            if (viewMode == ViewMode.SUMMARY && ScrollbarRenderer.isMouseOverScrollbar(click.x(), click.y(),
+                pieceBonusScrollbarX(summaryColumnWidth()), START_Y, visible * ROW_HEIGHT)) {
+                draggingPieceBonusScrollbar = true;
+                updatePieceBonusScrollbarPosition(click.y(), visible);
+                return true;
+            }
             if (ScrollbarRenderer.isMouseOverScrollbar(click.x(), click.y(), currentScrollbarX(), START_Y, visible * ROW_HEIGHT)) {
                 draggingScrollbar = true;
                 updateScrollbarPosition(click.y(), visible);
@@ -380,6 +413,11 @@ public final class WeightScreen extends ModScreen {
     }
 
     @Override public boolean mouseDragged(MouseButtonEvent click, double deltaX, double deltaY) {
+        if (draggingPieceBonusScrollbar && click.button() == 0 && result != null) {
+            int visible = Math.max(1, (height - START_Y - FOOTER_HEIGHT - 20) / ROW_HEIGHT);
+            updatePieceBonusScrollbarPosition(click.y(), visible);
+            return true;
+        }
         if (draggingScrollbar && click.button() == 0 && result != null) {
             int visible = Math.max(1, (height - START_Y - FOOTER_HEIGHT - (viewMode == ViewMode.SUMMARY ? 20 : 0)) / ROW_HEIGHT);
             updateScrollbarPosition(click.y(), visible);
@@ -389,6 +427,10 @@ public final class WeightScreen extends ModScreen {
     }
 
     @Override public boolean mouseReleased(MouseButtonEvent click) {
+        if (draggingPieceBonusScrollbar && click.button() == 0) {
+            draggingPieceBonusScrollbar = false;
+            return true;
+        }
         if (draggingScrollbar && click.button() == 0) {
             draggingScrollbar = false;
             return true;
@@ -403,6 +445,12 @@ public final class WeightScreen extends ModScreen {
             count, visible), 0, maxScroll);
     }
 
+    private void updatePieceBonusScrollbarPosition(double mouseY, int visible) {
+        int count = summaryRows(WeightCalculator.ContributionType.PIECE_BONUS).size();
+        pieceBonusScrollOffset = Math.clamp(ScrollbarRenderer.calculateScrollFromDrag(mouseY, START_Y, visible * ROW_HEIGHT,
+            count, visible), 0, Math.max(0, count - visible));
+    }
+
     private int rowCount() {
         return switch (viewMode) {
             case PIECES -> filteredPieces().size();
@@ -413,6 +461,14 @@ public final class WeightScreen extends ModScreen {
     private int currentScrollbarX() {
         if (viewMode == ViewMode.SUMMARY) return 20 + (width - 80) / 3 - 8;
         return width - 15;
+    }
+
+    private int summaryColumnWidth() {
+        return (width - 80) / 3;
+    }
+
+    private int pieceBonusScrollbarX(int columnWidth) {
+        return 40 + columnWidth * 2 - 8;
     }
 
     private WeightCalculator.Result cachedResultForCurrentCollection() {

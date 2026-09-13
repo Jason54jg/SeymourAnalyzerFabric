@@ -3,7 +3,6 @@ package schnerry.seymouranalyzer.data;
 import com.google.gson.Gson;
 import schnerry.seymouranalyzer.SeymourAnalyzer;
 import schnerry.seymouranalyzer.analyzer.ColorSlotValidity;
-import schnerry.seymouranalyzer.config.ClothConfig;
 import schnerry.seymouranalyzer.util.ColorMath;
 import schnerry.seymouranalyzer.util.PieceTypeUtil;
 
@@ -30,8 +29,9 @@ public final class WeightCalculator {
     public record Result(List<PieceWeight> pieces, List<Breakdown> breakdowns, double baseTotal, double bonusTotal,
                          double total, List<UnlistedMatch> unlistedMatches, String note) {}
     public record Progress(String phase, int percent) {}
-    private static final class Rules { List<BaseRule> baseRules; }
+    private static final class Rules { List<BaseRule> baseRules; List<WordBonus> wordBonuses; }
     private static final class BaseRule { int row; String label; double weight; Double ifFake; String comment; }
+    private static final class WordBonus { String word; double weight; }
     private record Match(String name, String hex, String sourceHex, double delta, int tier, boolean fade) {}
 
     public static Result calculate(Collection<ArmorPiece> collection, Consumer<Progress> progress) {
@@ -143,7 +143,7 @@ public final class WeightCalculator {
         if (label.contains("adaptive") && match.name.startsWith("Adaptive Armour") && !match.name.contains("Outside"))
             return requiredTier(rule) == match.tier;
         if (label.contains("ghostly") && match.name.startsWith("Ghostly Boots")) return requiredTier(rule) == match.tier;
-        if (label.contains("great spook") && match.name.startsWith("Great Spook")) return requiredTier(rule) == match.tier
+        if (label.startsWith("great spook t") && match.name.startsWith("Great Spook")) return requiredTier(rule) == match.tier
             && spookRange(label, match.hex);
         if (label.contains("xxxxxx") && match.hex.matches("(.)\\1{5}")) return requiredTier(rule) == match.tier;
         if (label.equals("dark/light bulk")) return match.tier == 3 && isDarkOrLightBulk(match.hex);
@@ -203,8 +203,8 @@ public final class WeightCalculator {
         if (max >= 5) bonuses.add(new Bonus(largestRun >= 5 ? "Quintuples (In a row)" : "Quintuples (Not in a row)", largestRun >= 5 ? 30 : 10));
         if (hex.matches("(.)\\1\\1(.)\\2\\2")) bonuses.add(new Bonus("AAABBB", 50));
         if (hex.matches("(.)(.)\\1\\2\\1\\2")) bonuses.add(new Bonus("ABABAB", 50));
-        for (Map.Entry<String, String> word : ClothConfig.getInstance().getWordList().entrySet()) if (wordMatches(hex, word.getValue())) {
-            int len = word.getKey().length(); if (len >= 3 && len <= 6) bonuses.add(new Bonus(len + " letter word: " + word.getKey(), switch (len) { case 3 -> .3; case 4 -> 10; case 5 -> 25; default -> 50; }));
+        for (WordBonus word : rules().wordBonuses) if (wordMatches(hex, word.word)) {
+            bonuses.add(new Bonus(word.word.length() + " letter word: " + word.word, word.weight));
         }
         return bonuses;
     }
