@@ -178,6 +178,10 @@ public class SeymourCommand {
             .then(literal("bestsets")
                 .executes(SeymourCommand::openBestSetsGUI))
 
+            // /seymour weight - open workbook-derived collection weight GUI
+            .then(literal("weight")
+                .executes(SeymourCommand::openWeightGUI))
+
             // /seymour words - open word matches GUI
             .then(literal("words")
                 .executes(SeymourCommand::openWordMatchesGUI))
@@ -329,6 +333,7 @@ public class SeymourCommand {
         ctx.getSource().sendFeedback(Component.literal("§2/seymour export start/stop §7- Start/stop clipboard export"));
         ctx.getSource().sendFeedback(Component.literal("§2/seymour search <hexes> §7- Highlight chests with hex codes"));
         ctx.getSource().sendFeedback(Component.literal("§8/seymour compare <hexes> §7- Compare multiple hex codes"));
+        ctx.getSource().sendFeedback(Component.literal("§6/seymour weight §7- Calculate collection weight"));
         ctx.getSource().sendFeedback(Component.literal("§2/seymour toggle <option> §7- Toggle settings"));
         ctx.getSource().sendFeedback(Component.literal("§4/seymour clear §7- Clear all caches & collection"));
         ctx.getSource().sendFeedback(Component.literal("§8/seymour stats §7- Print the amount of T1/T2/Dupes"));
@@ -1125,6 +1130,16 @@ public class SeymourCommand {
         } catch (Exception e) {
             ctx.getSource().sendError(Component.literal("§c[Seymour] §7Error: " + e.getMessage()));
             return reportCommandError(ctx, "opening best sets GUI", e);
+        }
+        return 1;
+    }
+
+    private static int openWeightGUI(CommandContext<FabricClientCommandSource> ctx) {
+        try {
+            runOnClientThread(() -> Minecraft.getInstance().gui.setScreen(new WeightScreen(null)));
+        } catch (Exception e) {
+            ctx.getSource().sendError(Component.literal("§c[Seymour] §7Error: " + e.getMessage()));
+            return reportCommandError(ctx, "opening weight GUI", e);
         }
         return 1;
     }

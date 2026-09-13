@@ -293,6 +293,11 @@ public class DatabaseScreen extends ModScreen {
             .build();
         this.addRenderableWidget(profileSelector);
 
+        Button weightButton = Button.builder(Component.literal("§eGo to Weight"),
+            button -> this.minecraft.gui.setScreen(new WeightScreen(this)))
+            .bounds(430, 10, 90, 20).build();
+        this.addRenderableWidget(weightButton);
+
         // Word matches button (bottom right)
         Button wordButton = Button.builder(Component.literal("§lWord Matches"),
             button -> this.minecraft.gui.setScreen(new WordMatchesScreen(this, selectedProfileId)))

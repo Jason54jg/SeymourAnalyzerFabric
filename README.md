@@ -36,6 +36,7 @@ A Fabric 26.1.2 client-side mod for Hypixel Skyblock that analyzes and tracks dy
 - `/seymour config` - Open config GUI
 - `/seymour scan start/stop` - Start/stop chest scanning
 - `/seymour db` - Open database GUI
+- `/seymour weight` - Calculate workbook-derived collection weight by profile
 - `/seymour toggle <option>` - Toggle features
 - `/seymour add <name> <hex>` - Add custom color
 - `/seymour word add <word> <pattern>` - Add word pattern
@@ -166,4 +167,3 @@ For bugs, feature requests, or questions:
 ---
 
 **Note:** This is a client-side mod for Hypixel Skyblock. It does not modify any server-side behavior and complies with Hypixel's mod rules.
-

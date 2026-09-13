@@ -16,12 +16,7 @@ import java.util.stream.Collectors;
 public class ColorAnalyzer {
     private static ColorAnalyzer INSTANCE;
     private static final double PRIORITY_DELTA_E_WINDOW = 0.75;
-    private static final int SLOT_HELMET = 1;
-    private static final int SLOT_CHESTPLATE = 1 << 1;
-    private static final int SLOT_LEGGINGS = 1 << 2;
-    private static final int SLOT_BOOTS = 1 << 3;
     private final ColorDatabase colorDatabase;
-    private final Map<String, Integer> colorNameSlotMaskCache = new HashMap<>();
 
     private ColorAnalyzer() {
         this.colorDatabase = ColorDatabase.getInstance();
@@ -285,42 +280,7 @@ public class ColorAnalyzer {
     }
 
     private boolean canMatchPiece(String colorName, String pieceType) {
-        if (pieceType == null) return true;
-
-        String lower = colorName.toLowerCase();
-
-        // 3p entries are multi-piece sets (chestplate/leggings/boots), never helmets.
-        if (lower.contains("3p")) {
-            return !"helmet".equals(pieceType);
-        }
-
-        // Cache parsed slot metadata for each unique color name to avoid repeated split/parsing.
-        int slotMask = colorNameSlotMaskCache.computeIfAbsent(lower, this::buildSlotMask);
-
-        // If no slot keywords found anywhere -> generic color -> allow for all slots.
-        if (slotMask == 0) return true;
-
-        return switch (pieceType) {
-            case "helmet" -> (slotMask & SLOT_HELMET) != 0;
-            case "chestplate" -> (slotMask & SLOT_CHESTPLATE) != 0;
-            case "leggings" -> (slotMask & SLOT_LEGGINGS) != 0;
-            case "boots" -> (slotMask & SLOT_BOOTS) != 0;
-            default -> true;
-        };
-    }
-
-    private int buildSlotMask(String lowerColorName) {
-        int slotMask = 0;
-        for (String segment : lowerColorName.split("/")) {
-            for (String part : segment.split("\\+")) {
-                String trimmed = part.trim();
-                if (PieceTypeUtil.matchesPieceType(trimmed, "helmet")) slotMask |= SLOT_HELMET;
-                if (PieceTypeUtil.matchesPieceType(trimmed, "chestplate")) slotMask |= SLOT_CHESTPLATE;
-                if (PieceTypeUtil.matchesPieceType(trimmed, "leggings")) slotMask |= SLOT_LEGGINGS;
-                if (PieceTypeUtil.matchesPieceType(trimmed, "boots")) slotMask |= SLOT_BOOTS;
-            }
-        }
-        return slotMask;
+        return ColorSlotValidity.isValidForPieceType(colorName, pieceType);
     }
 
     private int calculateTier(double deltaE, boolean isCustom, boolean isFade) {
@@ -362,4 +322,3 @@ public class ColorAnalyzer {
                              boolean isCustom, boolean isFade, boolean isFake) {
     }
 }
-

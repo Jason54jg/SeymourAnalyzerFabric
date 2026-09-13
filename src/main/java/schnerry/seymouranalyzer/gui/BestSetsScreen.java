@@ -48,7 +48,7 @@ public class BestSetsScreen extends ModScreen {
 
     private static final int MAX_SETS = 100;
     private static final double MAX_DELTA_E = 5.0;
-    private static final int ROW_HEIGHT = 80;
+    private static final int ROW_HEIGHT = 92;
     private static final int START_Y = 90;
     private static final long CACHE_VALIDITY_MS = 300000; // 5 minutes
 
@@ -255,17 +255,18 @@ public class BestSetsScreen extends ModScreen {
         // Statistics (right side)
         String avgColor = set.avgDeltaE <= 1.0 ? "§a" : (set.avgDeltaE <= 2.0 ? "§e" : "§6");
         guiGraphics.text(this.font, "§7Avg ΔE: " + avgColor + String.format("%.2f", set.avgDeltaE), 770, rowY, 0xFFFFFFFF);
-        guiGraphics.text(this.font, "§7W/o worst: §b" + String.format("%.2f", set.avgWithout1), 770, rowY + 12, 0xFFFFFFFF);
-        guiGraphics.text(this.font, "§7W/o worst 2: §d" + String.format("%.2f", set.avgWithout2), 770, rowY + 24, 0xFFFFFFFF);
-        guiGraphics.text(this.font, "§7Worst: §c" + set.worstPieceType, 770, rowY + 36, 0xFFFFFFFF);
+        guiGraphics.text(this.font, "§7Avg Abs: §f" + String.format("%.2f", set.avgAbsoluteDistance), 770, rowY + 12, 0xFFFFFFFF);
+        guiGraphics.text(this.font, "§7W/o worst: §b" + String.format("%.2f", set.avgWithout1), 770, rowY + 24, 0xFFFFFFFF);
+        guiGraphics.text(this.font, "§7W/o worst 2: §d" + String.format("%.2f", set.avgWithout2), 770, rowY + 36, 0xFFFFFFFF);
+        guiGraphics.text(this.font, "§7Worst: §c" + set.worstPieceType, 770, rowY + 48, 0xFFFFFFFF);
 
         // Average hex swatches
         ColorMath.RGB avgRgb = ColorMath.hexToRgb(set.avgHex);
         ColorMath.RGB top3Rgb = ColorMath.hexToRgb(set.top3AvgHex);
         int swatchSize = 8;
         int swatchX = 770;
-        int avgSwatchY = rowY + 50;
-        int top3SwatchY = rowY + 62;
+        int avgSwatchY = rowY + 62;
+        int top3SwatchY = rowY + 74;
 
         // All 4 avg hex
         guiGraphics.fill(swatchX, avgSwatchY, swatchX + swatchSize, avgSwatchY + swatchSize,
@@ -278,7 +279,7 @@ public class BestSetsScreen extends ModScreen {
         guiGraphics.text(this.font, "§7Top3: §f#" + set.top3AvgHex, swatchX + swatchSize + 3, top3SwatchY, 0xFFFFFFFF);
 
         // Separator line
-        guiGraphics.fill(20, rowY + 75, this.width - 40, rowY + 76, 0xFF3C3C3C);
+        guiGraphics.fill(20, rowY + 87, this.width - 40, rowY + 88, 0xFF3C3C3C);
     }
 
     @Override
@@ -672,6 +673,7 @@ public class BestSetsScreen extends ModScreen {
         final ArmorPiece boots;
 
         final double avgDeltaE;
+        final double avgAbsoluteDistance;
         final double avgWithout1; // Average ΔE without worst piece
         final double avgWithout2; // Average ΔE of best 2 pieces
         final String worstPieceType;
@@ -689,6 +691,14 @@ public class BestSetsScreen extends ModScreen {
 
             // Average of all pairs (already computed)
             this.avgDeltaE = (d_hc + d_hl + d_hb + d_cl + d_cb + d_lb) / 6.0;
+            this.avgAbsoluteDistance = (
+                ColorMath.calculateAbsoluteDistance(helmet.getHexcode(), chestplate.getHexcode())
+                    + ColorMath.calculateAbsoluteDistance(helmet.getHexcode(), leggings.getHexcode())
+                    + ColorMath.calculateAbsoluteDistance(helmet.getHexcode(), boots.getHexcode())
+                    + ColorMath.calculateAbsoluteDistance(chestplate.getHexcode(), leggings.getHexcode())
+                    + ColorMath.calculateAbsoluteDistance(chestplate.getHexcode(), boots.getHexcode())
+                    + ColorMath.calculateAbsoluteDistance(leggings.getHexcode(), boots.getHexcode())
+            ) / 6.0;
 
             // Calculate average delta for each piece
             double helmetAvg = (d_hc + d_hl + d_hb) / 3.0;

@@ -73,3 +73,6 @@ minecraft_*/
 
 # Conversion helpers (local only)
 scripts/
+
+# Local source workbook for generated weight rules
+Weight System.xlsx

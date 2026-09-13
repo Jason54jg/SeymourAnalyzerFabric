@@ -1,0 +1,382 @@
+{
+  "baseRules": [
+    {
+      "row": 2,
+      "label": "T3 (bulk)",
+      "weight": 0.1,
+      "ifFake": null,
+      "comment": ""
+    },
+    {
+      "row": 3,
+      "label": "Dark/Light Bulk",
+      "weight": 0.8,
+      "ifFake": null,
+      "comment": "\"Dark\": 2x2x2x or lower\n\"Light\": DxDxDx or higher"
+    },
+    {
+      "row": 4,
+      "label": "Normal Fade T2",
+      "weight": 0.2,
+      "ifFake": null,
+      "comment": "Except:\nBlack Ice Stage 2 to 20 & 55 to 65\nCharcoal all stages\nSnowflake Stage 6 to 28 & 39 to 57\nBeach Stage 52 to 60"
+    },
+    {
+      "row": 5,
+      "label": "Dark/Light Fade T2s",
+      "weight": 1.6,
+      "ifFake": null,
+      "comment": "Black Ice Stage 2 to 20 & 55 to 65\nCharcoal all stages\nSnowflake Stage 6 to 28 & 39 to 57\nBeach Stage 52 to 60"
+    },
+    {
+      "row": 6,
+      "label": "Normal Fade T1",
+      "weight": 1.0,
+      "ifFake": null,
+      "comment": "Except:\nBlack Ice Stage 2 to 20 & 55 to 65\nCharcoal all stages\nSnowflake Stage 6 to 28 & 39 to 57\nBeach Stage 52 to 60"
+    },
+    {
+      "row": 7,
+      "label": "Dark/Light Fade T1s",
+      "weight": 8.0,
+      "ifFake": null,
+      "comment": "Black Ice Stage 2 to 20 & 55 to 65\nCharcoal all stages\nSnowflake Stage 6 to 28 & 39 to 57"
+    },
+    {
+      "row": 8,
+      "label": "Normal Fade T0",
+      "weight": 2.0,
+      "ifFake": null,
+      "comment": "Except:\nBlack Ice Stage 2 to 20 & 55 to 65\nCharcoal all stages\nSnowflake Stage 6 to 28 & 39 to 57\nBeach Stage 52 to 60"
+    },
+    {
+      "row": 9,
+      "label": "Dark/Light Fade T0s",
+      "weight": 16.0,
+      "ifFake": null,
+      "comment": "Black Ice Stage 2 to 20 & 55 to 65\nCharcoal all stages\nSnowflake Stage 6 to 28 & 39 to 57\nBeach Stage 52 to 60"
+    },
+    {
+      "row": 10,
+      "label": "1:1 Fade",
+      "weight": 18.0,
+      "ifFake": null,
+      "comment": ""
+    },
+    {
+      "row": 11,
+      "label": "T2 Adaptive Stages",
+      "weight": 0.5,
+      "ifFake": 0.1,
+      "comment": "All classes, \"Chestplates\" & \"Leggings+Boots\"\nDoes not include \"Outside Dungeons\""
+    },
+    {
+      "row": 12,
+      "label": "T1 Adaptive Stages",
+      "weight": 3.0,
+      "ifFake": 0.6,
+      "comment": "All classes, \"Chestplates\" & \"Leggings+Boots\"\nDoes not include \"Outside Dungeons\""
+    },
+    {
+      "row": 13,
+      "label": "T0 Adaptive Stages",
+      "weight": 5.0,
+      "ifFake": 1.0,
+      "comment": "All classes, \"Chestplates\" & \"Leggings+Boots\"\nDoes not include \"Outside Dungeons\""
+    },
+    {
+      "row": 14,
+      "label": "T2 Ghostly Boots",
+      "weight": 0.5,
+      "ifFake": 0.1,
+      "comment": "Ghostly Boots - FCFCFC\nGhostly Boots - F5F5F5\nGhostly Boots - E9E9E9\nGhostly Boots - C6C6C6\nGhostly Boots - B0B0B0\nGhostly Boots - 989898\nGhostly Boots - 686868\nGhostly Boots - 505050\nGhostly Boots - 3A3A3A\nGhostly Boots - 272727\nGhostly Boots - 171717\nGhostly Boots - 0B0B0B\nGhostly Boots - 040404\nGhostly Boots - 010101"
+    },
+    {
+      "row": 15,
+      "label": "T1 Ghostly Boots",
+      "weight": 3.0,
+      "ifFake": 0.6,
+      "comment": "Ghostly Boots - FCFCFC\nGhostly Boots - F5F5F5\nGhostly Boots - E9E9E9\nGhostly Boots - C6C6C6\nGhostly Boots - B0B0B0\nGhostly Boots - 989898\nGhostly Boots - 686868\nGhostly Boots - 505050\nGhostly Boots - 3A3A3A\nGhostly Boots - 272727\nGhostly Boots - 171717\nGhostly Boots - 0B0B0B\nGhostly Boots - 040404\nGhostly Boots - 010101"
+    },
+    {
+      "row": 16,
+      "label": "T0 Ghostly Boots",
+      "weight": 5.0,
+      "ifFake": 1.0,
+      "comment": "Ghostly Boots - FCFCFC\nGhostly Boots - F5F5F5\nGhostly Boots - E9E9E9\nGhostly Boots - C6C6C6\nGhostly Boots - B0B0B0\nGhostly Boots - 989898\nGhostly Boots - 686868\nGhostly Boots - 505050\nGhostly Boots - 3A3A3A\nGhostly Boots - 272727\nGhostly Boots - 171717\nGhostly Boots - 0B0B0B\nGhostly Boots - 040404\nGhostly Boots - 010101"
+    },
+    {
+      "row": 17,
+      "label": "Great Spook T2 (Light Purple)",
+      "weight": 1.0,
+      "ifFake": null,
+      "comment": "Includes:\n9E00B2\n9700AA\n9000A3\n89009B"
+    },
+    {
+      "row": 18,
+      "label": "Great Spook T2 (Dark Purple)",
+      "weight": 2.0,
+      "ifFake": null,
+      "comment": "Includes:\n830093\n7C008B\n750084\n6E007C\n670074\n60006C\n590065\n52005D\n4C0055\n45004D\n3E0046\n37003E\n300036"
+    },
+    {
+      "row": 19,
+      "label": "Great Spook T2 (Black)",
+      "weight": 6.0,
+      "ifFake": null,
+      "comment": "Includes:\n29002E\n220027\n1B001F\n150017\n0E000F"
+    },
+    {
+      "row": 20,
+      "label": "T2 XXXXXX",
+      "weight": 5.0,
+      "ifFake": null,
+      "comment": ""
+    },
+    {
+      "row": 21,
+      "label": ">20k T2 pieces",
+      "weight": 1.0,
+      "ifFake": 0.2,
+      "comment": "Frostbitten Dye\nCreeper Pants (Leggings)\nMaxor Chestplate\n1.12 Light Blue\nStorm Boots\nWyld Leggings (Rift)\nAurora Chestplate\nThunder 3p\nWise Dragon 3p\nGrowth Armour"
+    },
+    {
+      "row": 22,
+      "label": ">15k T2 pieces",
+      "weight": 1.5,
+      "ifFake": 0.3,
+      "comment": "Og Fairy Dyed (CC00CC)\nLeaflet 3p\nStrong Dragon Chestplate\nAurora Leggings\nOg Fairy Dyed (6600CC)\nStrong Dragon Boots\n1.12 Cyan\nFemurgrowth Leggings (Rift)\nFig Armor 3p\nGlossy Mineral Armour 3p\nStorm Chestplate\nPure Blue Dye\nUgly Boots\nSkeleton Lord 3p\nTerror Leggings\nGoblin 3p\n1.12 Lime\nStorm Leggings\nExo pure green\nTerror Chestplate\nHoly Dragon 3p\nFervor Leggings\nBurned Pants (Rift) (Leggings)\nStereo Pants (Leggings)\nUnstable Dragon 3p\nSangria Dye\nFarmhand Chestplate"
+    },
+    {
+      "row": 23,
+      "label": ">10k T2 pieces",
+      "weight": 2.0,
+      "ifFake": 0.4,
+      "comment": "1.12 Orange\nBlaze Armour 3p\nFervor Chestplate\nFermento Chestplate\n1.12 Blue\nOg Fairy Dyed (4C0099)\nOg Fairy Dyed (990099)\nMaxor Leggings\nOG Fariy Dyed (CC0066)\nMoogma Leggings\nSalmon Helm+Boots\nMelon Armour 3p\nRotten Chestplate+Leggings\nTerror Boots\nSlug Boots\nVanguard 3p\nBingo Blue Dye\nBouncy\nShark Scale Armour 3p\nStrong Dragon Leggings\nFlaming Chestplate\nGuardian Chestplate\nPure Green\nEmerald Dye\nExo pure yellow\nSuperior Dragon Boots\nFermento Leggings\nGlacite 3p\nSkeleton Grunt\nRising Sun Leggings\nZombie Lord Armour 3p\nZombie Comander\nSuperior Dragon Chestplate+Leggings\nExo pure blue\nJade Dye\nFervor Boots\nRampart 3p\nHelix 3p"
+    },
+    {
+      "row": 24,
+      "label": ">5k T2 pieces",
+      "weight": 3.0,
+      "ifFake": 0.6,
+      "comment": "Water Hydra 3p\nSea Emperor/Loch Emperor 3p\nCharlie's Trousers\nSuper Heavy Chestplate+Leggings\nMiners/Prospecting\nNecromancer Lord Boots\nChicken Leggings (Rift)\nSpeedster Set/Mercenary Boots\nThermodynamic 3p\nPure Yellow Dye\nMinos Hunter Boots\nSecret Dye\nGoldor Boots\nHollow Chestplate\nGhostly Boots\nFairy Dyed (FF007F)\nHelianthus Leggings\nHeavy Chestplate+Leggings\nCropie Leggings\nSkeletor 3p\nNadeshiko Dye\nByzantium Dye\nExo pure red\nStrawberry Dye\nCropie Boots\n1.12 Yellow\nProtector Dragon 3p\nCopper Dye\nOg Fairy Dyed (330066)\nHolly Dye\nExo pure dark green\n1.12 Light Gray\nExo pure light grey\nStarlight Chestplate+Boots\n1.12 Pink\nCyclamen Dye\nMidnight Dye\nKuudra Follower 3p\nExo pure pink\nOg Fairy Dyed (660066)\nRotten Helm+Boots\nFarmhand Leggings\nSprout Boots\nTater Chestplate\nTater Leggings\nCrystal Dyed (9C64B3)\nAquamarine Dye\nCrystal Dyed (7E4196)\nCrystal Dyed (8E51A6)\nCrystal Dyed (A875BD)\nOg Fairy Dyed (7F00FF)\nArachne Armour 3p\nHeat Armour\nCrystal Dyed (B88BC9)\nAdaptive Armour (Outside Dungeon) 3p\nHelix Chestplate\nSquash Chestplate\nTentacle Dye\nCrystal Dyed (6A2C82)\nCrystal Dyed (EFE1F5)\nLivid Dye\nNecron Boots\nCrystal Dyed (C6A3D4)\nSpirit Boots\nExo pure orange\nOld Dragon 3p\nCheap Tux Leggings\nChallenger's Leggings+Boots\nFarmers Boots\nBrick Red Dye\nBone Dye\nPure Blue\nMaxor Boots\nCrystal Dyed (46085E)\nCrystal Dyed (D9C1E3)\nNecron Leggings\nCharlies Trousers (Leggings)\nMythological Dye\nFancy Tux Leggings\nCeleste Helm\nStone/Metal/Steel Chestplate\nGunthers Sneakers (Boots)\nMelodys Shoes (Boots)\nHelix Boots\nRabbit Armour\nCrystal Dyed (E5D1ED)\nCrystal Dyed (63237D)\nHydra 3p\nOG Fairy Dyed (99004C)\nAurora Boots\nSuper Heavy Helm+Boots\nZombie Soldier\nBeserker Leggings\nCarmine Dye\nYoung Dragon 3p\nExo pure purple\nCeladon Dye\nFossil Dye\nFairy Dyed (FF3399)\nCanopy Chestplate\nMagma Lord 3p\n1.12 Red\nMinos Hunter Chestplate+Leggings\nSquash Leggings\nRising Sun Boots\n1.12 Magenta\nGreat Spook\nEmperor 3p\nCrystal Dyed (5D1C78)\nFermento Boots\nPumpkin\nExo pure cyan\nYog Armour\nPearlescent Dye\nCrimson Boots\nSalmon Chestplate+Leggings\nWyld Boots (Rift)\nOg Fairy Dyed (9933FF)\nMatcha Dye\nNecron Dye/Chestplate\nCanopy Leggings\nArchfiend Dye\nExo pure magenta\nPure Cyan\nFrozen Blaze 3p\nIceberg Dye\nCrystal Dyed (54146E)\nBeserker Boots\nOg Fairy Dyed (FF33FF)\nFlame Dye\nCrimson Leggings\n1.12 Green\n1.12 Purple\nExo pure light blue\nSea Walker 3p\nNutcracker Chestplate\nAbyssal 3p\nTreasure Dye\nSquash Boots\nSuper Heavy Chestplate+Leggings\nMiners/Prospecting\nNecromancer Lord Boots\nChicken Leggings (Rift)\nSpeedster Set/Mercenary Boots\nThermodynamic 3p\nPure Yellow Dye\nMinos Hunter Boots\nSecret Dye\nGoldor Boots\nHollow Chestplate\nGhostly Boots\nFairy Dyed (FF007F)\nHelianthus Legs\nHeavy Chestplate+Leggings\nCropie Leggings\nSkeletor 3p\nNadeshiko Dye\nByzantium Dye\nExo pure red\nStrawberry Dye\nCropie Boots\n1.12 Yellow\nProtector Dragon 3p\nCopper Dye\nOg Fairy Dyed (330066)\nHolly Dye\nExo pure dark green\n1.12 Light Gray\nExo pure light grey\nStarlight Chestplate+Boots\n1.12 Pink\nCyclamen Dye\nMidnight Dye\nKuudra Follower 3p\nExo pure pink\nOg Fairy Dyed (660066)\nRotten Helm+Boots\nCrystal Dyed (9C64B3)\nAquamarine Dye\nCrystal Dyed (7E4196)\nCrystal Dyed (8E51A6)\nCrystal Dyed (A876BD)\nOg Fairy Dyed (7F00FF)\nArachne Armour 3p\nHeat Armour\nCrystal Dyed (B88BC9)\nAdaptive Armour (Outside Dungeon) 3p\nHelix Chestplate\nSquash Chestplate\nTentacle Dye\nCrystal Dyed (6A2C82)\nCrystal Dyed (EFE1F5)\nLivid Dye\nNecron Boots\nCrystal Dyed (C6A3D4)\nSpirit Boots\nExo pure orange\nOld Dragon 3p\nCheap Tux Leggings\nChallenger's Leggings+Boots\nFarmers Boots\nBrick Red Dye\nBone Dye\nPure Blue\nMaxor Boots\nCrystal Dyed (46085E)\nCrystal Dyed (D9C1E3)\nNecron Leggings\nCharlies Trousers (Leggings)\nMythological Dye\nFancy Tux Leggings\nCeleste Helm\nStone/Metal/Steel Chestplate\nGunthers Sneakers (Boots)\nMelodys Shoes (Boots)\nHelix Boots\nRabbit Armour\nCrystal Dyed (E5D1ED)\nCrystal Dyed (63237D)\nHydra 3p\nOG Fairy Dyed (99004C)\nAurora Boots\nSuper Heavy Helm+Boots\nZombie Soldier\nBeserker Leggings\nCarmine Dye\nYoung Dragon 3p\nExo pure purple\nCeladon Dye\nFossil Dye\nFairy Dyed (FF3399)\nCanopy Chestplate\nMagma Lord 3p\n1.12 Red\nMinos Hunter Chestplate+Leggings\nSquash Leggings\nRising Sun Boots\n1.12 Magenta\nGreat Spook\nEmperor 3p\nCrystal Dyed (5D1C78)\nFermento Boots\nPumpkin\nExo pure cyan\nYog Armour\nPearlescent Dye\nCrimson Boots\nSalmon Chestplate+Leggings\nWyld Boots (Rift)\nOg Fairy Dyed (9933FF)\nMatcha Dye\nNecron Dye/Chestplate\nCanopy Leggings\nArchfiend Dye\nExo pure magenta\nPure Cyan\nFrozen Blaze 3p\nIceberg Dye\nCrystal Dyed (54146E)\nBeserker Boots\nOg Fairy Dyed (FF33FF)\nFlame Dye\nCrimson Leggings\n1.12 Green\n1.12 Purple\nExo pure light blue\nSea Walker 3p\nNutcracker Chestplate\nAbyssal 3p\nTreasure Dye\nSquash Boots"
+    },
+    {
+      "row": 25,
+      "label": ">3k T2 pieces",
+      "weight": 4.0,
+      "ifFake": 0.8,
+      "comment": "Werewolf 3p\nElegant Tux Leggings\n1.12 White\nExo pure black\nCrypt Witherlord\nDung Dye\nFinal Destination Leggings\nArmour of Magma\nDark Purple Dye\nCeleste Boots\nShimmering Light 3p\nNutcracker Boots\nFairy Dyed (FF99CC)\nPure Yellow\nCheap Tux Chestplate+Boots\nChocolate Dye\nCeleste Leggings\nBiohazard 3p\nFinal Destination Chestplate+Boots\nFairy Dyed (FFCCE5)\nOg Fairy Dyed (FF66FF)\nGoldor Chestplate\nCropie Chestplate\nOrange Chestplate (Rift)\nHollow Leggings\nCeleste Chestplate\nNutcracker Leggings\nNecromancer Lord Leggings\nExo pure brown\nPure Black\nOg Fairy Dyed (E5CCFF)\nPelt Dye\nOg Fairy Dyed (CC99FF)\nNyanza Dye\nFairy Dyed (FF66B2)\nPeriwinkle Dye\nCeleste Dye\nHollow Boots\nExo pure grey\nMineral Armour 3p\nBeserker Chestplate\nSquire Boots\nSponge 3p\n1.12 Brown\nSnake-in-a-boot (Boots)\nAngler 3p\n1.12 Gray\nFarm Armour/Elanor's Set (Rift)\nPure Pink/Og Fairy Dyed (FF00FF)\nOG Fairy Dyed (660033)\nGoldor Leggings\nPure Red\nOg Fairy Dyed (B266FF)\nSpooky Armour 3p\nFallen Star 3p\nMythos Leggings+Boots\nPrimordial Armour 3p\nSkeleton Master\nBleached\nCrimson Chestplate\nMocha Dye\nSkeleton Soldier\nMango Dye\nFarmhand Helm\nSprout Chestplate\nSprout Leggings\nTater Boots\nThermodynamic 3p"
+    },
+    {
+      "row": 26,
+      "label": "Rare T2s",
+      "weight": 8.0,
+      "ifFake": 1.6,
+      "comment": "Og Fairy Dyed (FF99FF)\nOg Fairy Dyed (FFCCFF)\nCrystal Dyed (1F0030)\nCrystal Dyed (FCF3FF)\n"
+    },
+    {
+      "row": 27,
+      "label": "Very Rare T2s",
+      "weight": 15.0,
+      "ifFake": 3.0,
+      "comment": "Canopy Boots\nFancy Tux Chestplate + Boots\n1.12+ Pure Black\n1.12+ Pure White"
+    },
+    {
+      "row": 28,
+      "label": "Extremely Rare T2s",
+      "weight": 25.0,
+      "ifFake": 5.0,
+      "comment": "Pure Black\nExotic Pure Black\nPure White\nReaper Armor 3p\nExceedingly Comfy Sneakers"
+    },
+    {
+      "row": 29,
+      "label": "Great Spook T1 (Light Purple)",
+      "weight": 6.0,
+      "ifFake": null,
+      "comment": "Includes:\n9E00B2\n9700AA\n9000A3\n89009B"
+    },
+    {
+      "row": 30,
+      "label": "Great Spook T1 (Dark Purple)",
+      "weight": 8.0,
+      "ifFake": null,
+      "comment": "Includes:\n830093\n7C008B\n750084\n6E007C\n670074\n60006C\n590065\n52005D\n4C0055\n45004D\n3E0046\n37003E\n300036"
+    },
+    {
+      "row": 31,
+      "label": "Great Spook T1 (Black)",
+      "weight": 13.0,
+      "ifFake": null,
+      "comment": "Includes:\n29002E\n220027\n1B001F\n150017\n0E000F"
+    },
+    {
+      "row": 32,
+      "label": "T1 XXXXXX",
+      "weight": 10.0,
+      "ifFake": null,
+      "comment": ""
+    },
+    {
+      "row": 33,
+      "label": "Common T1s",
+      "weight": 6.0,
+      "ifFake": null,
+      "comment": "Pure Blue Dye\nGrowth Armor"
+    },
+    {
+      "row": 34,
+      "label": ">2k T1 pieces",
+      "weight": 8.0,
+      "ifFake": 1.6,
+      "comment": "Storm Chestplate\nPure Green\nStereo Pants (Leggings)\nStorm Leggings\nUnstable Dragon 3p\nGlacite 3p\nFervor Leggings\nAurora Chestplate\nFrostbitten Dye\nSangria Dye\nBurned Pants (Rift) (Leggings)\nStorm Boots\nThunder 3p\nWise Dragon 3p"
+    },
+    {
+      "row": 35,
+      "label": ">1k T1 pieces",
+      "weight": 10.0,
+      "ifFake": 2.0,
+      "comment": "1.12+ Pure Blue\nFlaming Chestplate\nStrong Dragon Chestplate\nRotten Chestplate+Leggings\nFermento Chestplate\nPure Cyan\nGoblin 3p\nTerror Leggings\nSea Walker 3p\nAbyssal 3p\n1.12+ Pure Lime\nAurora Leggings\nHoly Dragon 3p\nBingo Blue Dye\nShark Scale Armour 3p\nZombie Lord 3p\nUgly Boots\nCreeper Pants (Leggings)\nWyld Leggings (Rift)\nOg Fairy Dyed (6600CC)\n1.12+ Pure Light Blue\nRising Sun Leggings\nFemurgrowth Leggings (Rift)\nOg Fairy Dyed (CC00CC)\nJade Dye\nGuardian Chestplate\nRampart 3p\nMaxor Chestplate\nExo pure green\nZombie Comander\nGlossy Mineral Armour 3p\nFig Armor 3p\nSkeleton Lord 3p\nFervor Boots\nSuperior Dragon Chestplate+Leggings\nTerror Chestplate\nMinos Hunter Chestplate+Leggings\n1.12+ Pure Cyan\nFarmhand Chestplate"
+    },
+    {
+      "row": 36,
+      "label": ">500 T1 pieces",
+      "weight": 12.0,
+      "ifFake": 2.4,
+      "comment": "Water Hydra 3p\nThermodynamic 3p\nCharlie's Trousers\nSea Emperor/Loch Emperor 3p\nFancy Tux Leggings\nStone/Metal/Steel Chestplate\nCrystal Dyed (E5D1ED)\nFairy Dyed (FF3399)\nRabbit Armour\nCeleste Helm\nSuper Heavy Helm+Boots\nCrystal Dyed (EFE1F5)\nYoung Dragon 3p\nHelianthus Leggings\nCeladon Dye\nKuudra Follower 3p\nExo pure purple\nCrystal Dyed (5D1C78)\nChicken Leggings (Rift)\nPure Red\n1.12 Red\nOg Fairy Dyed (FF33FF)\nBeserker Boots\nFarmers Boots\nFermento Boots\nPure Yellow Dye\n1.12 Magenta\nCharlies Trousers (Leggings)\nGreat Spook\nFairy Dyed (FF007F)\nExo pure cyan\nPumpkin\nSalmon Chestplate+Leggings\nMatcha Dye\nOg Fairy Dyed (9933FF)\nArachne Armour 3p\nNecron Dye/Chestplate\nCrystal Dyed (54146E)\nFossil Dye\nWyld Boots (Rift)\nRotten Helm+Boots\nOg Fairy Dyed (7F00FF)\nFlame Dye\nStarlight Chestplate+Boots\nYog Armour\nExo pure magenta\nFrozen Blaze 3p\nIceberg Dye\nCarmine Dye\nZombie Soldier\nOG Fairy Dyed (99004C)\nSquash Chestplate\n1.12+ Pure Green\nCrystal Dyed (46085E)\nThermodynamic 3p\n1.12+ Pure Purple\nExo pure light blue\nCrimson Boots\nFervor Chestplate\nMythological Dye\n1.12+ Pure Blue\nAurora Boots\nHydra 3p\nMelon Armour 3p\nBouncy\nHelix Boots\nSkeleton Master\nMoogma Leggings\nSlug Boots\nMango Dye\nCrimson Chestplate\nMaxor Leggings\nSkeleton Soldier\nCanopy Chestplate\nTreasure Dye\nTerror Boots\nNutcracker Chestplate\nBlaze Armour 3p\n1.12+ Pure Orange\nOg Fairy Dyed (4C0099)\nEmperor 3p\nHollow Chestplate\nArchfiend Dye\nExo pure yellow\nEmerald Dye\nSquash Leggings\nSquash Boots\nFermento Leggings\nSkeleton Grunt\nExo pure blue\nVanguard 3p\nCanopy Leggings\nSuperior Dragon Boots\nSalmon Helm+Boots\nMagma Lord 3p\nStrong Dragon Leggings\nRising Sun Boots\nPearlescent Dye\nOg Fairy Dyed (990099)\nCrimson Leggings\nPure Blue\nStrong Dragon Boots\nOG Fariy Dyed (CC0066)\nLeaflet 3p\nHelix 3p\nSprout Leggings\nThermodynamic 3p"
+    },
+    {
+      "row": 37,
+      "label": ">300 T1 pieces",
+      "weight": 14.0,
+      "ifFake": 2.8,
+      "comment": "Elegant Tux Leggings\nNecromancer Lord Leggings\nSnake-in-a-boot (Boots)\nBeserker Chestplate\nFairy Dyed (FF66B2)\nWerewolf 3p\n1.12+ Pure Gray\nCeleste Dye\nGoldor Leggings\nArmour of Magma\nHollow Boots\nMineral Armour 3p\nSpooky Armour 3p\nSponge 3p\nOrange Chestplate (Rift)\nFallen Star 3p\nMythos Leggings+Boots\nBleached\nOG Fairy Dyed (660033)\nSuper Heavy Chestplate+Leggings\nOg Fairy Dyed (B266FF)\nMocha Dye\nMiners/Prospecting\nBiohazard 3p\nFinal Destination Chestplate+Boots\nMinos Hunter Boots\nPrimordial Armour 3p\nSecret Dye\nGoldor Boots\nGhostly Boots\nHeavy Chestplate+Leggings\nPure Black\nByzantium Dye\nCropie Boots\nCropie Leggings\nPure Yellow\nExo pure red\nSkeletor 3p\nProtector Dragon 3p\nStrawberry Dye\nOg Fairy Dyed (330066)\nCopper Dye\nHolly Dye\nExo pure dark green\n1.12+ Pure Light Gray\nExo pure light grey\nMidnight Dye\nLivid Dye\n1.12+ Pure Pink\nCrystal Dyed (7E4196)\nShimmering Light 3p\nTentacle Dye\nCrystal Dyed (6A2C82)\nCrystal Dyed (8E51A6)\nExo pure pink\n1.12+ Pure Yellow\nHelix Chestplate\nCrystal Dyed (9C64B3)\nNadeshiko Dye\nCrystal Dyed (A875BD)\nFarm Armour/Elanor's Set (Rift)\nHeat Armour\nAdaptive Armour (Outside Dungeon) 3p\nAquamarine Dye\nChallenger's Leggings+Boots\nCrystal Dyed (B88BC9)\nBeserker Leggings\nNecron Boots\nCyclamen Dye\nCrystal Dyed (C6A3D4)\nNecromancer Lord Boots\nOld Dragon 3p\nAngler 3p\nExo pure orange\nSpirit Boots\nNecron Leggings\nBrick Red Dye\nCheap Tux Leggings\nBone Dye\nMelodys Shoes (Boots)\nCrystal Dyed (63237D)\nPure Pink/Og Fairy Dyed (FF00FF)\nOg Fairy Dyed (660066)\nCrystal Dyed (D9C1E3)\nMaxor Boots\nSpeedster Set/Mercenary Boots\nGunthers Sneakers (Boots)\nFarmhand Helm\nFarmhand Leggings\nSprout Boots\nTater Chestplate\nTater Leggings\nTater Boots"
+    },
+    {
+      "row": 38,
+      "label": ">200 T1 pieces",
+      "weight": 18.0,
+      "ifFake": 3.6,
+      "comment": "Includes:\n\nOG Fairy Dyed (FFCCFF)\nOG Fairy Dyed (FF99FF)\nDark Purple Dye\nDung Dye\nNutcracker Boots\nChocolate Dye\nCheap Tux Chestplate+Boots\nCeleste Boots\nFinal Destination Leggings\nGoldor Chestplate\nFairy Dyed (FF99CC)\nExo pure brown\nCeleste Leggings\nFairy Dyed (FFCCE5)\nHollow Leggings\nCeleste Chestplate\nPelt Dye\nOg Fairy Dyed (FF66FF)\nCropie Chestplate\nOg Fairy Dyed (E5CCFF)\nExo pure grey\nNutcracker Leggings\nOg Fairy Dyed (CC99FF)\nCrypt Witherlord\nSquire Boots\nNyanza Dye\n1.12+ Pure Brown\nPeriwinkle Dye\nSprout Chestplate"
+    },
+    {
+      "row": 39,
+      "label": "Rare T1s",
+      "weight": 35.0,
+      "ifFake": 7.0,
+      "comment": "Reaper Armor 3p\nCrystal Dyed (1F0030)\nCrystal Dyed (FCF3FF)"
+    },
+    {
+      "row": 40,
+      "label": "Extremely Rare T1s",
+      "weight": 60.0,
+      "ifFake": 12.0,
+      "comment": "Pure Black\nPure White\nExotic Pure Black\nExceedingly Comfy Sneakers"
+    },
+    {
+      "row": 41,
+      "label": "Very Rare T1s",
+      "weight": 25.0,
+      "ifFake": 5.0,
+      "comment": "Fancy Tux Chestplate + Boots\nCanopy Boots\n1.12+ Pure Black \n1.12+ Pure White"
+    },
+    {
+      "row": 42,
+      "label": "1:1 Great Spook",
+      "weight": 75.0,
+      "ifFake": null,
+      "comment": ""
+    },
+    {
+      "row": 43,
+      "label": ">200 T0 pieces",
+      "weight": 12.5,
+      "ifFake": 2.5,
+      "comment": "Includes: \n\nGrowth Armour\nPure Blue Dye\nBurned Pants\nSangria Dye\nStorm Boots\nPure Green\nMinos Hunter Chestplate+Leggings\nGlacite 3p\nFrostbitten Dye\nStorm Leggings\nStereo Pants\nFervor Leggings\nThunder 3p\nStorm Chestplate\nWise Dragon 3p\n1.12 Cyan\nUnstable Dragon 3p\nFarmhand Chestplate\nFervor Boots\nTerror Chestplate\nSuperior Dragon Chestplate+Leggings\nAurora Chestplate\nSkeleton Lord 3p\nGuardian Chestplate\nFemurgrowth Leggings\nJade Dye\nOG Fairy Dyed (CC00CC)\nPure Blue\nRampart 3p\n"
+    },
+    {
+      "row": 44,
+      "label": ">150 T0 pieces",
+      "weight": 15.0,
+      "ifFake": 3.0,
+      "comment": "Terror Leggings\nFermento Chestplate\nSkeleton Soldier\nRotten Chestplate+Leggings\nAurora Leggings\nCrimson Leggings\nUgly Boots\nWyld Leggings (Rift)\nCreeper Pants (Leggings)\nRising Sun Leggings\nHollow Chestplate\nMango Dye\n1.12 Light Blue\nSea Walker 3p\nOg Fairy Dyed (6600CC)\nFig Armor 3p\nExo pure green\nShark Scale Armour 3p\nBingo Blue Dye\nMaxor Chestplate\nZombie Lord 3p\nAbyssal 3p\nGlossy Mineral Armour 3p\nZombie Comander\nPure Cyan"
+    },
+    {
+      "row": 45,
+      "label": ">100 T0 pieces",
+      "weight": 17.5,
+      "ifFake": 3.5,
+      "comment": "Thermodynamic 3p\nSea Emperor/Loch Emperor 3p\nSquash Chestplate\nHelix 3p\nCanopy Chestplate\nBlaze Armour 3p\nOg Fairy Dyed (4C0099)\nStrong Dragon Leggings\nSquash Leggings\nSalmon Helm+Boots\nMagma Lord 3p\nExo pure yellow\nExo pure blue\nSkeleton Grunt\nFermento Leggings\nCrimson Chestplate\nArchfiend Dye\nSuperior Dragon Boots\nNutcracker Chestplate\nSkeleton Master\nTreasure Dye\nVanguard 3p\nEmperor 3p\nPearlescent Dye\nSprout Leggings\nStrong Dragon Boots\nOg Fairy Dyed (990099)\nFlaming Chestplate\nLeaflet 3p\nCanopy Leggings\nRising Sun Boots\nStrong Dragon Chestplate\nGoblin 3p\nOG Fariy Dyed (CC0066)\n1.12 Lime\nHoly Dragon 3p"
+    },
+    {
+      "row": 46,
+      "label": ">50 T0 pieces",
+      "weight": 20.0,
+      "ifFake": 4.0,
+      "comment": "Cropie Boots\nCrystal Dyed (6A2C82)\nFinal Destination Chestplate+Boots\nCopper Dye\nNadeshiko Dye\nExo pure pink\n1.12 Pink\nBiohazard 3p\nProtector Dragon 3p\nSkeletor 3p\nMelodys Shoes (Boots)\nCrystal Dyed (8E51A6)\nCrystal Dyed (7E4196)\nCrystal Dyed (63237D)\nBrick Red Dye\nHolly Dye\nLivid Dye\nFarmhand Leggings\nTater Chestplate\nSprout Boots\nHeat Armour\nOld Dragon 3p\nAdaptive Armour (Outside Dungeon) 3p\nOg Fairy Dyed (330066)\nCrystal Dyed (E5D1ED)\nCrystal Dyed (D9C1E3)\nCrystal Dyed (C6A3D4)\nCrystal Dyed (B88BC9)\nCrystal Dyed (A875BD)\nCrystal Dyed (9C64B3)\nCyclamen Dye\nStrawberry Dye\nExo pure light grey\n1.12 Light Gray\nCheap Tux Leggings\nSpirit Boots\nTentacle Dye\nNecron Boots\nBone Dye\nFancy Tux Leggings\nStone-Metal-Steel Chestplate - D9D9D9\nCrystal Dyed (EFE1F5)\nBeserker Leggings\nChallenger's Leggings+Boots\nTater Leggings\nYoung Dragon 3p\nRabbit Armour\nAquamarine Dye\nCeladon Dye\nExo pure orange\nSuper Heavy Helm+Boots\nCeleste Helm\nSpeedster Set/Mercenary Bts\nCrystal Dyed (5D1C78)\nMaxor Boots\nNecron Leggings\nOg Fairy Dyed (660066)\nExo pure purple\n1.12 Red\nFarmhand Helm\nNecromancer Lord Boots\nGunthers Sneakers (Boots)\nPure Yellow\nPumpkin\nKuudra Follower 3p\n1.12 Yellow\nGreat Spook\nCharlies Trousers (Leggings)\nHaymaker 3p/Elanor's Set (Rift)\nFossil Dye\nFarmers Boots\nSalmon Chestplate+Leggings\nShimmering Light 3p\n1.12 Magenta\nWyld Boots (Rift)\nCrystal Dyed (54146E)\nExo pure cyan\nBeserker Boots\nAngler 3p\nFermento Boots\nFrozen Blaze 3p\nExo pure magenta\nFairy Dyed (FF3399)\nOg Fairy Dyed (FF33FF)\nCrystal Dyed (46085E)\nMatcha Dye\nGreat Spook - 6E007C\nIceberg Dye\nNecron Dye/Chest\nFlame Dye\nOg Fairy Dyed (9933FF)\n1.12 Green\nArachne Armour 3p\nYog Armour\nMaxor Leggings\nExo pure light blue\nMelon Armour 3p\nCarmine Dye\nZombie Soldier\nOG Fairy Dyed (99004C)\nPure Pink/Og Fairy Dyed (FF00FF)\nChicken Leggings (Rift)\nPure Yellow Dye\n1.12 Purple\nFervor Chestplate\nTerror Boots\nHelianthus Leggings\nMythological Dye\nCrimson Boots\nBouncy\nRotten Helm+Boots\n1.12 Blue\nMoogma Leggings\nHydra 3p\nSlug Boots\nFairy Dyed (FF007F)\nEmerald Dye\nAurora Boots\nSquash Boots\nPure Red\nOg Fairy Dyed (7F00FF)\nStarlight Chestplate+Boots\n1.12 Orange"
+    },
+    {
+      "row": 47,
+      "label": ">20 T0 pieces",
+      "weight": 25.0,
+      "ifFake": 5.0,
+      "comment": "OG Fairy Dyed (FFCCFF)\nDung Dye\nOG Fairy Dyed (FF99FF)\nChocolate Dye\nDark Purple Dye\nExo pure brown\nNutcracker Boots\nCeleste Boots\nFairy Dyed (FFCCE5)\nFairy Dyed (FF99CC)\nFinal Destination Leggings\nPelt Dye\nExo pure grey\nCheap Tux Chestplate+Boots\nNutcracker Leggings\nGoldor Chestplate\nSquire Boots\nCeleste Leggings\nSpooky Armour 3p\n1.12 Gray\nHollow Leggings\nCeleste Chestplate\nOg Fairy Dyed (E5CCFF)\nFallen Star 3p\n1.12 Brown\nGoldor Leggings\nWerewolf 3p\nOg Fairy Dyed (CC99FF)\nCrystal Armour Reg (FCF3FF)\nNyanza Dye\nHollow Boots\nFairy Dyed (FF66B2)\nCropie Chestplate\nMiners/Prospecting\nOG Fairy Dyed (660033)\nOg Fairy Dyed (FF66FF)\nMocha Dye\nBleached\nBeserker Chestplate\nSnake-in-a-boot (Boots)\nSprout Chestplate\nSponge 3p\nPeriwinkle Dye\nMineral Armour 3p\nNecromancer Lord Leggings\nMythos Leggings+Boots\nCeleste Dye\nSuper Heavy Chestplate+Leggings\nPrimordial Armour 3p\nGoldor Boots\nOg Fairy Dyed (B266FF)\nSecret Dye\nMinos Hunter Boots\nByzantium Dye\nOrange Chestplate (Rift)\nGhostly Boots\nTater Boots\nArmour of Magma\nCrypt Witherlord\nExo pure red\nExo pure dark green\nElegant Tux Leggings\nCropie Leggings\nMidnight Dye\nHeavy Chestplate+Leggings"
+    },
+    {
+      "row": 48,
+      "label": "Extremely Rare T0s",
+      "weight": 80.0,
+      "ifFake": 16.0,
+      "comment": "Pure Black\nPure White\nExotic Pure Black\nExceedingly Comfy Sneakers"
+    },
+    {
+      "row": 49,
+      "label": "Very Rare T0s",
+      "weight": 30.0,
+      "ifFake": 6.0,
+      "comment": "Fancy Tux Chestplate + Boots\nCanopy Boots\n1.12+ Pure Black\n1.12+ Pure White"
+    },
+    {
+      "row": 50,
+      "label": "Rare T0s",
+      "weight": 45.0,
+      "ifFake": 9.0,
+      "comment": "Reaper Armor 3p\nCrystal Dyed (1F0030)\nCrystal Dyed (FCF3FF)"
+    },
+    {
+      "row": 51,
+      "label": "Great Spook T0 (Light Purple)",
+      "weight": 7.0,
+      "ifFake": null,
+      "comment": "Includes:\n9E00B2\n9700AA\n9000A3\n89009B"
+    },
+    {
+      "row": 52,
+      "label": "Great Spook T0 (Dark Purple)",
+      "weight": 9.0,
+      "ifFake": null,
+      "comment": "Includes:\n830093\n7C008B\n750084\n6E007C\n670074\n60006C\n590065\n52005D\n4C0055\n45004D\n3E0046\n37003E\n300036"
+    },
+    {
+      "row": 53,
+      "label": "Great Spook T0 (Black)",
+      "weight": 14.0,
+      "ifFake": null,
+      "comment": "Includes:\n29002E\n220027\n1B001F\n150017\n0E000F"
+    },
+    {
+      "row": 54,
+      "label": "XXXXXX T0",
+      "weight": 12.0,
+      "ifFake": null,
+      "comment": ""
+    },
+    {
+      "row": 55,
+      "label": "1:1",
+      "weight": 100.0,
+      "ifFake": 50.0,
+      "comment": ""
+    }
+  ]
+}
