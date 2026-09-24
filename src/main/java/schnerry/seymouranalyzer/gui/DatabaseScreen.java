@@ -269,7 +269,7 @@ public class DatabaseScreen extends ModScreen {
         // Checklist button (top left)
         Button checklistButton = Button.builder(Component.literal("Open Checklist GUI"),
             button -> this.minecraft.gui.setScreen(new ArmorChecklistScreen(this)))
-            .bounds(20, 10, 150, 20).build();
+            .bounds(20, 10, 130, 20).build();
         this.addRenderableWidget(checklistButton);
 
         // Remember Position toggle button (right of checklist button)
@@ -280,7 +280,7 @@ public class DatabaseScreen extends ModScreen {
                 if (rememberPosition) saveCurrentState();
                 this.rebuildWidgets();
             })
-            .bounds(175, 10, 100, 20).build();
+            .bounds(155, 10, 100, 20).build();
         this.addRenderableWidget(rememberBtn);
 
         Button profileSelector = Button.builder(
@@ -289,13 +289,13 @@ public class DatabaseScreen extends ModScreen {
                 profileDropdownOpen = !profileDropdownOpen;
                 this.rebuildWidgets();
             })
-            .bounds(280, 10, 145, 20)
+            .bounds(260, 10, 145, 20)
             .build();
         this.addRenderableWidget(profileSelector);
 
         Button weightButton = Button.builder(Component.literal("§eGo to Weight"),
             button -> this.minecraft.gui.setScreen(new WeightScreen(this)))
-            .bounds(430, 10, 90, 20).build();
+            .bounds(this.width - 235, this.height - 35, 90, 20).build();
         this.addRenderableWidget(weightButton);
 
         // Word matches button (bottom right)

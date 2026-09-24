@@ -407,7 +407,7 @@ public final class WeightScreen extends ModScreen {
         contextMenu = null;
         if (mouseX < menu.x || mouseX > menu.x + 140 || mouseY < menu.y || mouseY > menu.y + 20) return true;
         DatabaseScreen database = new DatabaseScreen(this);
-        database.setInitialSearch(menu.piece.piece().getPieceName());
+        database.setHexSearch(menu.piece.piece().getHexcode());
         minecraft.gui.setScreen(database);
         return true;
     }

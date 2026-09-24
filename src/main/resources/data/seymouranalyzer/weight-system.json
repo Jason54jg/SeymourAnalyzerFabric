@@ -145,7 +145,7 @@
       "label": ">15k T2 pieces",
       "weight": 1.5,
       "ifFake": 0.3,
-      "comment": "Og Fairy Dyed (CC00CC)\nLeaflet 3p\nStrong Dragon Chestplate\nAurora Leggings\nOg Fairy Dyed (6600CC)\nStrong Dragon Boots\n1.12 Cyan\nFemurgrowth Leggings (Rift)\nFig Armor 3p\nGlossy Mineral Armour 3p\nStorm Chestplate\nPure Blue Dye\nUgly Boots\nSkeleton Lord 3p\nTerror Leggings\nGoblin 3p\n1.12 Lime\nStorm Leggings\nExo pure green\nTerror Chestplate\nHoly Dragon 3p\nFervor Leggings\nBurned Pants (Rift) (Leggings)\nStereo Pants (Leggings)\nUnstable Dragon 3p\nSangria Dye\nFarmhand Chestplate"
+      "comment": "Og Fairy Dyed (CC00CC)\nLeaflet 3p\nStrong Dragon Chestplate\nAurora Leggings\nOg Fairy Dyed (6600CC)\nStrong Dragon Boots\n1.12 Cyan\nFemurgrowth Leggings (Rift)\nFig Armor 3p\nGlossy Mineral Armour 3p\nStorm Chestplate\nPure Blue Dye\nUgly Boots\nSkeleton Lord 3p\nTerror Leggings\nGoblin 3p\n1.12 Lime\nStorm Leggings\nExo pure green\nTerror Chestplate\nHoly Dragon 3p\nFervor Leggings\nBurned Pants (Rift) \nStereo Pants (Leggings)\nUnstable Dragon 3p\nSangria Dye\nFarmhand Chestplate"
     },
     {
       "row": 23,
@@ -229,7 +229,7 @@
       "label": ">2k T1 pieces",
       "weight": 8.0,
       "ifFake": 1.6,
-      "comment": "Storm Chestplate\nPure Green\nStereo Pants (Leggings)\nStorm Leggings\nUnstable Dragon 3p\nGlacite 3p\nFervor Leggings\nAurora Chestplate\nFrostbitten Dye\nSangria Dye\nBurned Pants (Rift) (Leggings)\nStorm Boots\nThunder 3p\nWise Dragon 3p"
+      "comment": "Storm Chestplate\nPure Green\nStereo Pants (Leggings)\nStorm Leggings\nUnstable Dragon 3p\nGlacite 3p\nFervor Leggings\nAurora Chestplate\nFrostbitten Dye\nSangria Dye\nBurned Pants (Rift)\nStorm Boots\nThunder 3p\nWise Dragon 3p"
     },
     {
       "row": 35,
@@ -271,7 +271,7 @@
       "label": "Extremely Rare T1s",
       "weight": 60.0,
       "ifFake": 12.0,
-      "comment": "Pure Black\nPure White\nExotic Pure Black\nExceedingly Comfy Sneakers"
+      "comment": "Pure Black\nPure White\nExo Pure Black\nExceedingly Comfy Sneakers"
     },
     {
       "row": 41,
@@ -292,7 +292,7 @@
       "label": ">200 T0 pieces",
       "weight": 12.5,
       "ifFake": 2.5,
-      "comment": "Includes: \n\nGrowth Armour\nPure Blue Dye\nBurned Pants\nSangria Dye\nStorm Boots\nPure Green\nMinos Hunter Chestplate+Leggings\nGlacite 3p\nFrostbitten Dye\nStorm Leggings\nStereo Pants\nFervor Leggings\nThunder 3p\nStorm Chestplate\nWise Dragon 3p\n1.12 Cyan\nUnstable Dragon 3p\nFarmhand Chestplate\nFervor Boots\nTerror Chestplate\nSuperior Dragon Chestplate+Leggings\nAurora Chestplate\nSkeleton Lord 3p\nGuardian Chestplate\nFemurgrowth Leggings\nJade Dye\nOG Fairy Dyed (CC00CC)\nPure Blue\nRampart 3p\n"
+      "comment": "Includes: \n\nGrowth Armour\nPure Blue Dye\nBurned Pants (Rift)\nSangria Dye\nStorm Boots\nPure Green\nMinos Hunter Chestplate+Leggings\nGlacite 3p\nFrostbitten Dye\nStorm Leggings\nStereo Pants\nFervor Leggings\nThunder 3p\nStorm Chestplate\nWise Dragon 3p\n1.12 Cyan\nUnstable Dragon 3p\nFarmhand Chestplate\nFervor Boots\nTerror Chestplate\nSuperior Dragon Chestplate+Leggings\nAurora Chestplate\nSkeleton Lord 3p\nGuardian Chestplate\nFemurgrowth Leggings (Rift)\nJade Dye\nOG Fairy Dyed (CC00CC)\nPure Blue\nRampart 3p\n"
     },
     {
       "row": 44,

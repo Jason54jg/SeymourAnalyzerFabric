@@ -33,6 +33,8 @@ public final class WeightCalculator {
     private static final class BaseRule { int row; String label; double weight; Double ifFake; String comment; }
     private static final class WordBonus { String word; double weight; }
     private record Match(String name, String hex, String sourceHex, double delta, int tier, boolean fade) {}
+    private record ScoredMatch(Match match, BaseRule rule, boolean fake, double weight) {}
+    private record ColorCandidate(String name, String hex, boolean fade, ColorMath.LAB lab) {}
 
     public static Result calculate(Collection<ArmorPiece> collection, Consumer<Progress> progress) {
         progress.accept(new Progress("Loading workbook rules", 5));
@@ -40,17 +42,21 @@ public final class WeightCalculator {
         List<ArmorPiece> pieces = collection.stream().filter(WeightCalculator::validPiece).toList();
         List<PieceWeight> weighted = new ArrayList<>();
         List<Breakdown> contributions = new ArrayList<>();
+        Map<String, BaseRule> ruleCache = new HashMap<>();
+        List<ColorCandidate> colorCandidates = colorCandidates();
         double baseTotal = 0;
         progress.accept(new Progress("Applying one base rule per piece", 10));
         for (int index = 0; index < pieces.size(); index++) {
             ArmorPiece piece = pieces.get(index);
-            Match match = closestMatch(piece);
-            BaseRule rule = selectRule(loaded.baseRules, match);
-            boolean fake = !ColorSlotValidity.isValidForPiece(match.name, piece.getPieceName());
-            double base = fake && rule.ifFake != null ? rule.ifFake : rule.weight;
+            ScoredMatch scored = bestMatch(piece, loaded.baseRules, ruleCache, colorCandidates);
+            Match match = scored.match;
+            BaseRule rule = scored.rule;
+            boolean fake = scored.fake;
+            double base = scored.weight;
             List<ScoreBonus> applied = new ArrayList<>();
             List<Bonus> individual = individualBonuses(piece.getHexcode());
             for (Bonus bonus : individual) applied.add(new ScoreBonus(bonus.name, bonus.weight));
+            applied.sort(Comparator.comparingDouble(ScoreBonus::weight).reversed().thenComparing(ScoreBonus::name));
             weighted.add(new PieceWeight(piece, match.name, match.hex, match.tier, fake, rule.label, base,
                 List.copyOf(applied)));
             baseTotal += base;
@@ -84,20 +90,43 @@ public final class WeightCalculator {
             && piece.getPieceName() != null;
     }
 
-    private static Match closestMatch(ArmorPiece piece) {
+    private static List<ColorCandidate> colorCandidates() {
         ColorDatabase db = ColorDatabase.getInstance();
-        Match best = null;
-        for (Map.Entry<String, String> entry : db.getTargetColors().entrySet()) best = closer(best, entry, false, piece.getHexcode());
-        for (Map.Entry<String, String> entry : db.getFadeDyes().entrySet()) best = closer(best, entry, true, piece.getHexcode());
-        if (best == null) return new Match("Unknown", "000000", normalizeHex(piece.getHexcode()), Double.MAX_VALUE, 3, false);
-        return best;
+        List<ColorCandidate> candidates = new ArrayList<>(db.getTargetColors().size() + db.getFadeDyes().size());
+        db.getTargetColors().forEach((name, hex) -> candidates.add(new ColorCandidate(name, normalizeHex(hex), false, db.getLabForHex(hex))));
+        db.getFadeDyes().forEach((name, hex) -> candidates.add(new ColorCandidate(name, normalizeHex(hex), true, db.getLabForHex(hex))));
+        return candidates;
     }
 
-    private static Match closer(Match best, Map.Entry<String, String> entry, boolean fade, String hex) {
-        double delta = ColorMath.calculateDeltaE(hex, entry.getValue());
+    private static ScoredMatch bestMatch(ArmorPiece piece, List<BaseRule> rules, Map<String, BaseRule> ruleCache,
+                                         List<ColorCandidate> colorCandidates) {
+        ColorMath.LAB pieceLab = ColorDatabase.getInstance().getLabForHex(piece.getHexcode());
+        ScoredMatch best = null;
+        for (ColorCandidate candidate : colorCandidates) {
+            best = higherScoredMatch(best, evaluateMatch(candidate, piece, pieceLab, rules, ruleCache));
+        }
+        if (best != null) return best;
+        Match fallbackMatch = new Match("Unknown", "000000", normalizeHex(piece.getHexcode()), Double.MAX_VALUE, 3, false);
+        return new ScoredMatch(fallbackMatch, fallback(fallbackMatch), false, 0);
+    }
+
+    private static ScoredMatch evaluateMatch(ColorCandidate candidate, ArmorPiece piece, ColorMath.LAB pieceLab, List<BaseRule> rules,
+                                             Map<String, BaseRule> ruleCache) {
+        double delta = ColorMath.calculateDeltaEWithLab(pieceLab, candidate.lab);
         int tier = delta <= 1 ? 0 : delta <= 2 ? 1 : delta <= 5 ? 2 : 3;
-        Match candidate = new Match(entry.getKey(), normalizeHex(entry.getValue()), normalizeHex(hex), delta, tier, fade);
-        return best == null || delta < best.delta ? candidate : best;
+        String sourceHex = normalizeHex(piece.getHexcode());
+        Match match = new Match(candidate.name, candidate.hex, sourceHex, delta, tier, candidate.fade);
+        String cacheKey = candidate.name + "|" + candidate.hex + "|" + tier + "|" + candidate.fade
+            + "|" + candidate.hex.equals(sourceHex) + "|" + isDarkOrLightBulk(sourceHex);
+        BaseRule rule = ruleCache.computeIfAbsent(cacheKey, ignored -> selectRule(rules, match));
+        boolean fake = !isSlotAgnostic(rule) && !ColorSlotValidity.isValidForPiece(match.name, piece.getPieceName());
+        return new ScoredMatch(match, rule, fake, fake && rule.ifFake != null ? rule.ifFake : rule.weight);
+    }
+
+    private static ScoredMatch higherScoredMatch(ScoredMatch current, ScoredMatch candidate) {
+        if (current == null || candidate.weight > current.weight) return candidate;
+        if (candidate.weight < current.weight) return current;
+        return candidate.match.delta < current.match.delta ? candidate : current;
     }
 
     private static BaseRule selectRule(List<BaseRule> all, Match match) {
@@ -129,7 +158,8 @@ public final class WeightCalculator {
 
     private static boolean isSpecificMatch(BaseRule rule, Match match) {
         String label = rule.label.toLowerCase();
-        if (label.contains("bulk") || label.contains("normal fade") || label.contains("dark/light fade")) return false;
+        if (label.startsWith("1:1") || label.startsWith("great spook t") || label.contains("bulk")
+            || label.contains("normal fade") || label.contains("dark/light fade")) return false;
         if (requiredTier(rule) != match.tier) return false;
         String comment = normalize(rule.comment == null ? "" : rule.comment);
         String ruleLabel = normalize(rule.label);
@@ -143,23 +173,19 @@ public final class WeightCalculator {
         if (label.contains("adaptive") && match.name.startsWith("Adaptive Armour") && !match.name.contains("Outside"))
             return requiredTier(rule) == match.tier;
         if (label.contains("ghostly") && match.name.startsWith("Ghostly Boots")) return requiredTier(rule) == match.tier;
-        if (label.startsWith("great spook t") && match.name.startsWith("Great Spook")) return requiredTier(rule) == match.tier
-            && spookRange(label, match.hex);
+        if (label.startsWith("great spook t") && match.name.startsWith("Great Spook")) {
+            boolean isBaseColor = match.name.equals("Great Spook");
+            boolean isListedColor = (rule.comment == null ? "" : rule.comment).toUpperCase().contains(match.hex);
+            return requiredTier(rule) == match.tier && (isListedColor || isBaseColor && label.contains("light purple"));
+        }
         if (label.contains("xxxxxx") && match.hex.matches("(.)\\1{5}")) return requiredTier(rule) == match.tier;
-        if (label.equals("dark/light bulk")) return match.tier == 3 && isDarkOrLightBulk(match.hex);
+        if (label.equals("dark/light bulk")) return match.tier == 3 && isDarkOrLightBulk(match.sourceHex);
         if (label.contains("normal fade") || label.contains("dark/light fade")) {
             boolean exceptional = exceptionalFade(match.name);
             return match.fade && requiredTier(rule) == match.tier && (label.contains("dark/light") == exceptional);
         }
         if (label.equals("t3 (bulk)")) return match.tier == 3;
         return false;
-    }
-
-    private static boolean spookRange(String label, String hex) {
-        int value = Integer.parseInt(hex, 16);
-        if (label.contains("light purple")) return value >= Integer.parseInt("89009B", 16) && value <= Integer.parseInt("9E00B2", 16);
-        if (label.contains("dark purple")) return value >= Integer.parseInt("300036", 16) && value <= Integer.parseInt("830093", 16);
-        return value < Integer.parseInt("300036", 16);
     }
 
     private static boolean exceptionalFade(String name) {
@@ -171,8 +197,11 @@ public final class WeightCalculator {
     }
     private static boolean isDarkOrLightBulk(String hex) {
         ColorMath.RGB rgb = ColorMath.hexToRgb(hex);
-        return (rgb.r() <= 0x22 && rgb.g() <= 0x22 && rgb.b() <= 0x22)
-            || (rgb.r() >= 0xDD && rgb.g() >= 0xDD && rgb.b() >= 0xDD);
+        return (rgb.r() <= 0x2F && rgb.g() <= 0x2F && rgb.b() <= 0x2F)
+            || (rgb.r() >= 0xD0 && rgb.g() >= 0xD0 && rgb.b() >= 0xD0);
+    }
+    private static boolean isSlotAgnostic(BaseRule rule) {
+        return rule.label.equalsIgnoreCase("T3 (bulk)") || rule.label.equalsIgnoreCase("Dark/Light Bulk");
     }
     private static int stage(String name) { try { return Integer.parseInt(name.replaceAll(".*Stage ", "")); } catch (NumberFormatException ignored) { return -1; } }
     private static int requiredTier(BaseRule rule) {
