@@ -40,6 +40,7 @@ public class CollectionManager {
     private final Map<String, ArmorPiece> collection = new ConcurrentHashMap<>();
     private final AtomicBoolean isDirty = new AtomicBoolean(false);
     private final AtomicBoolean isSaving = new AtomicBoolean(false);
+    private boolean unsupportedDatabaseVersion;
     private long lastSaveTime = 0;
     private static final long SAVE_DEBOUNCE_MS = 2000; // Wait 2 seconds after last change before saving
     private int lastCollectionSize = 0; // Track size to detect changes
@@ -64,8 +65,15 @@ public class CollectionManager {
         try {
             if (collectionFile.exists()) {
                 JsonObject json = GSON.fromJson(new FileReader(collectionFile), JsonObject.class);
-
-                json.entrySet().forEach(entry -> {
+                int version = json.has("databaseVersion") ? json.get("databaseVersion").getAsInt() : 0;
+                if (version > DataVersions.DATABASE) {
+                    unsupportedDatabaseVersion = true;
+                    SeymourAnalyzer.LOGGER.error("Collection database version {} is newer than supported version {}; refusing to overwrite it",
+                        version, DataVersions.DATABASE);
+                    return;
+                }
+                JsonObject pieces = json.has("pieces") ? json.getAsJsonObject("pieces") : json;
+                pieces.entrySet().forEach(entry -> {
                     try {
                         ArmorPiece piece = GSON.fromJson(entry.getValue(), ArmorPiece.class);
                         collection.put(entry.getKey(), piece);
@@ -73,7 +81,10 @@ public class CollectionManager {
                         SeymourAnalyzer.LOGGER.warn("Failed to parse armor piece: " + entry.getKey(), e);
                     }
                 });
-
+                if (version < DataVersions.DATABASE) {
+                    isDirty.set(true);
+                    SeymourAnalyzer.LOGGER.info("Loaded legacy collection database; it will be migrated to version {}", DataVersions.DATABASE);
+                }
                 SeymourAnalyzer.LOGGER.info("Loaded {} armor pieces from collection", collection.size());
             }
         } catch (Exception e) {
@@ -98,6 +109,10 @@ public class CollectionManager {
     }
 
     private void saveSync() {
+        if (unsupportedDatabaseVersion) {
+            SeymourAnalyzer.LOGGER.error("Skipping collection save because the database schema is newer than this mod supports");
+            return;
+        }
         if (isSaving.get()) {
             SeymourAnalyzer.LOGGER.warn("Save already in progress, skipping");
             return;
@@ -106,8 +121,10 @@ public class CollectionManager {
         isSaving.set(true);
         try {
             JsonObject json = new JsonObject();
-
-            collection.forEach((uuid, piece) -> json.add(uuid, GSON.toJsonTree(piece)));
+            json.addProperty("databaseVersion", DataVersions.DATABASE);
+            JsonObject pieces = new JsonObject();
+            collection.forEach((uuid, piece) -> pieces.add(uuid, GSON.toJsonTree(piece)));
+            json.add("pieces", pieces);
 
             try (FileWriter writer = new FileWriter(collectionFile)) {
                 GSON.toJson(json, writer);

@@ -154,16 +154,30 @@ public class ChecklistCacheGenerator {
                 return Double.compare(a.deltaE, b.deltaE);
             });
 
-            // Greedy assignment
+            // Required slots use each piece once so checklist completion remains accurate.
             Set<String> usedPieces = new HashSet<>();
             Set<Integer> assignedStages = new HashSet<>();
 
             for (CandidateMatch candidate : candidates) {
+                if (!candidate.isNeeded) continue;
                 if (!usedPieces.contains(candidate.uuid) && !assignedStages.contains(candidate.stageIndex)) {
                     foundPieces.get(candidate.stageIndex).put(pieceType, candidate.piece);
                     foundPieceUuids.get(candidate.stageIndex).put(pieceType, candidate.uuid);
                     usedPieces.add(candidate.uuid);
                     assignedStages.add(candidate.stageIndex);
+                }
+            }
+
+            // Fill optional slots in checklist order with each remaining piece at most once.
+            for (int stageIndex = 0; stageIndex < entries.size(); stageIndex++) {
+                if (entries.get(stageIndex).pieces.contains(pieceType)) continue;
+                for (CandidateMatch candidate : candidates) {
+                    if (!candidate.isNeeded && candidate.stageIndex == stageIndex && !usedPieces.contains(candidate.uuid)) {
+                        foundPieces.get(stageIndex).put(pieceType, candidate.piece);
+                        foundPieceUuids.get(stageIndex).put(pieceType, candidate.uuid);
+                        usedPieces.add(candidate.uuid);
+                        break;
+                    }
                 }
             }
         }
@@ -332,4 +346,3 @@ public class ChecklistCacheGenerator {
         return fadeDyeCategories;
     }
 }
-

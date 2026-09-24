@@ -494,11 +494,12 @@ public class ArmorChecklistScreen extends ModScreen {
                 return Double.compare(a.deltaE, b.deltaE); // Then by quality
             });
 
-            // Greedy assignment: assign each piece to the best available stage
+            // Required slots use each piece once so checklist completion remains accurate.
             Set<String> usedPieces = new HashSet<>();
             Set<Integer> assignedStages = new HashSet<>();
 
             for (CandidateMatch candidate : candidates) {
+                if (!candidate.isNeeded) continue;
                 String uuid = candidate.uuid;
 
                 if (!usedPieces.contains(uuid) && !assignedStages.contains(candidate.stageIndex)) {
@@ -508,6 +509,20 @@ public class ArmorChecklistScreen extends ModScreen {
                     targetEntry.foundPieceUuids.put(pieceType, uuid);
                     usedPieces.add(uuid);
                     assignedStages.add(candidate.stageIndex);
+                }
+            }
+
+            // Fill optional slots in checklist order with each remaining piece at most once.
+            for (int stageIndex = 0; stageIndex < entries.size(); stageIndex++) {
+                ChecklistEntry targetEntry = entries.get(stageIndex);
+                if (targetEntry.pieces.contains(pieceType)) continue;
+                for (CandidateMatch candidate : candidates) {
+                    if (!candidate.isNeeded && candidate.stageIndex == stageIndex && !usedPieces.contains(candidate.uuid)) {
+                        targetEntry.foundPieces.put(pieceType, candidate.piece);
+                        targetEntry.foundPieceUuids.put(pieceType, candidate.uuid);
+                        usedPieces.add(candidate.uuid);
+                        break;
+                    }
                 }
             }
         }
