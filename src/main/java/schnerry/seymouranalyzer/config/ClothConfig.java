@@ -157,7 +157,10 @@ public class ClothConfig {
     public void load() {
         try {
             if (configFile.exists()) {
-                JsonObject json = GSON.fromJson(new FileReader(configFile), JsonObject.class);
+                JsonObject json;
+                try (FileReader reader = new FileReader(configFile)) {
+                    json = GSON.fromJson(reader, JsonObject.class);
+                }
 
                 if (json.has("infoBoxEnabled")) infoBoxEnabled = json.get("infoBoxEnabled").getAsBoolean();
                 if (json.has("highlightsEnabled")) highlightsEnabled = json.get("highlightsEnabled").getAsBoolean();
@@ -224,7 +227,10 @@ public class ClothConfig {
         // Load custom data
         try {
             if (dataFile.exists()) {
-                JsonObject json = GSON.fromJson(new FileReader(dataFile), JsonObject.class);
+                JsonObject json;
+                try (FileReader reader = new FileReader(dataFile)) {
+                    json = GSON.fromJson(reader, JsonObject.class);
+                }
 
                 if (json.has("customColors")) {
                     JsonObject colors = json.getAsJsonObject("customColors");

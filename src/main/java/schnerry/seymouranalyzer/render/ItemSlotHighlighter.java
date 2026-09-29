@@ -1,7 +1,6 @@
 package schnerry.seymouranalyzer.render;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.inventory.Slot;
 import schnerry.seymouranalyzer.analyzer.ColorAnalyzer;
@@ -12,7 +11,6 @@ import schnerry.seymouranalyzer.data.ArmorPiece;
 import schnerry.seymouranalyzer.data.CollectionManager;
 import schnerry.seymouranalyzer.scanner.ChestScanner;
 
-import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -25,20 +23,13 @@ import java.util.WeakHashMap;
 public class ItemSlotHighlighter {
     private static ItemSlotHighlighter instance;
     private final Set<String> searchHexes = new HashSet<>();
-    private final ChestScanner scanner = new ChestScanner(); // Reuse scanner instance
+    private final ChestScanner scanner = new ChestScanner();
 
     // Cache analyzed item data to avoid re-processing every frame
     // WeakHashMap allows garbage collection of ItemStack keys when no longer referenced
     private final WeakHashMap<ItemStack, CachedItemData> itemCache = new WeakHashMap<>();
 
-    // Debug mode - set to true to log position info and show visual debug
-    private static final boolean DEBUG_POSITIONS = false;
-
-
-    /**
-         * Cached data for an item to avoid re-analysis every frame
-         */
-        private record CachedItemData(String hex, String uuid, Integer highlightColor) {
+    private record CachedItemData(String hex, String uuid, Integer highlightColor) {
     }
 
     private ItemSlotHighlighter() {
@@ -123,261 +114,6 @@ public class ItemSlotHighlighter {
 
             drawSlotHighlight(guiGraphics, slotX, slotY, cachedData.highlightColor);
         }
-    }
-
-    /**
-     * Render highlights in slot coordinate space
-     * This is called during beforeRenderForeground which already has the correct translation applied
-     */
-    private void renderHighlightsInSlotSpace(AbstractContainerScreen<?> screen, GuiGraphicsExtractor guiGraphics) {
-        ClothConfig config = ClothConfig.getInstance();
-        if (!config.isHighlightsEnabled()) return;
-
-        try {
-            if (DEBUG_POSITIONS) {
-                System.out.println("=== DEBUG POSITIONS (Slot Space) ===");
-                System.out.println("Total slots: " + screen.getMenu().slots.size());
-            }
-
-            int debugCount = 0;
-            // Iterate through all slots in the screen
-            for (Slot slot : screen.getMenu().slots) {
-                ItemStack stack = slot.getItem();
-
-                // Debug first 3 slots regardless of content
-                if (DEBUG_POSITIONS && debugCount < 3) {
-                    System.out.println("\nSlot #" + slot.index + ":");
-                    System.out.println("  slot.x=" + slot.x + ", slot.y=" + slot.y);
-                    System.out.println("  (using slot position directly, no offset needed)");
-                    System.out.println("  has item: " + !stack.isEmpty());
-                    if (!stack.isEmpty()) {
-                        System.out.println("  item: " + stack.getHoverName().getString());
-                    }
-                    debugCount++;
-                }
-
-                if (stack.isEmpty()) continue;
-
-                // Check if it's a Seymour armor piece (fast name check)
-                String itemName = stack.getHoverName().getString();
-                if (!ChestScanner.isSeymourArmor(itemName)) continue;
-
-                // Check cache first - if we've already analyzed this ItemStack, use cached data
-                CachedItemData cachedData = itemCache.get(stack);
-
-                if (cachedData == null) {
-                    // Not in cache - analyze and cache it
-                    String hex = scanner.extractHex(stack);
-                    if (hex == null) continue;
-
-                    String uuid = scanner.getOrCreateItemUUID(stack);
-                    Integer highlightColor = getHighlightColor(stack, hex, itemName, uuid);
-
-                    // Cache for next frame
-                    cachedData = new CachedItemData(hex, uuid, highlightColor);
-                    itemCache.put(stack, cachedData);
-                }
-
-                // Use cached highlight color
-                if (cachedData.highlightColor != null) {
-                    // In slot coordinate space, we use slot.x and slot.y directly
-                    // No screen offset needed - the coordinate system is already transformed
-                    int slotX = slot.x;
-                    int slotY = slot.y;
-
-                    if (DEBUG_POSITIONS) {
-                        System.out.println("\n*** HIGHLIGHTING SEYMOUR PIECE ***");
-                        System.out.println("Item: " + itemName);
-                        System.out.println("Slot #" + slot.index + " at x=" + slotX + ", y=" + slotY);
-                        System.out.println("Color: " + Integer.toHexString(cachedData.highlightColor));
-                    }
-
-                    drawSlotHighlight(guiGraphics, slotX, slotY, cachedData.highlightColor);
-
-                    // Draw debug markers
-                    if (DEBUG_POSITIONS) {
-                        // Draw a bright cyan border to show where we're drawing
-                        guiGraphics.fill(slotX, slotY, slotX + 16, slotY + 1, 0xFF00FFFF); // Top
-                        guiGraphics.fill(slotX, slotY + 15, slotX + 16, slotY + 16, 0xFF00FFFF); // Bottom
-                        guiGraphics.fill(slotX, slotY, slotX + 1, slotY + 16, 0xFF00FFFF); // Left
-                        guiGraphics.fill(slotX + 15, slotY, slotX + 16, slotY + 16, 0xFF00FFFF); // Right
-                    }
-                }
-            }
-
-            if (DEBUG_POSITIONS) {
-                System.out.println("======================\n");
-            }
-        } catch (Exception e) {
-            if (DEBUG_POSITIONS) {
-                System.err.println("Error in renderHighlightsInSlotSpace: " + e.getMessage());
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Old render method - kept for reference, can be removed later
-     */
-    private void renderHighlights(AbstractContainerScreen<?> screen, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
-        ClothConfig config = ClothConfig.getInstance();
-        if (!config.isHighlightsEnabled()) return;
-
-        try {
-            // Get screen position - try multiple field names for compatibility
-            int screenX = getScreenX(screen);
-            int screenY = getScreenY(screen);
-
-            if (DEBUG_POSITIONS) {
-                System.out.println("=== DEBUG POSITIONS ===");
-                System.out.println("Screen dimensions: " + screen.width + "x" + screen.height);
-                System.out.println("Calculated screen position: x=" + screenX + ", y=" + screenY);
-                System.out.println("Total slots: " + screen.getMenu().slots.size());
-            }
-
-            int debugCount = 0;
-            // Iterate through all slots in the screen
-            for (Slot slot : screen.getMenu().slots) {
-                ItemStack stack = slot.getItem();
-
-                // Debug first 3 slots regardless of content
-                if (DEBUG_POSITIONS && debugCount < 3) {
-                    System.out.println("\nSlot #" + slot.index + ":");
-                    System.out.println("  slot.x=" + slot.x + ", slot.y=" + slot.y);
-                    System.out.println("  calculated screen pos: " + (screenX + slot.x) + ", " + (screenY + slot.y));
-                    System.out.println("  has item: " + !stack.isEmpty());
-                    if (!stack.isEmpty()) {
-                        System.out.println("  item: " + stack.getHoverName().getString());
-                    }
-                    debugCount++;
-                }
-
-                if (stack.isEmpty()) continue;
-
-                // Check if it's a Seymour armor piece (fast name check)
-                String itemName = stack.getHoverName().getString();
-                if (!ChestScanner.isSeymourArmor(itemName)) continue;
-
-                // Check cache first - if we've already analyzed this ItemStack, use cached data
-                CachedItemData cachedData = itemCache.get(stack);
-
-                if (cachedData == null) {
-                    // Not in cache - analyze and cache it
-                    String hex = scanner.extractHex(stack);
-                    if (hex == null) continue;
-
-                    String uuid = scanner.getOrCreateItemUUID(stack);
-                    Integer highlightColor = getHighlightColor(stack, hex, itemName, uuid);
-
-                    // Cache for next frame
-                    cachedData = new CachedItemData(hex, uuid, highlightColor);
-                    itemCache.put(stack, cachedData);
-                }
-
-                // Use cached highlight color
-                if (cachedData.highlightColor != null) {
-                    // Use the slot's own x/y coordinates plus the screen offset
-                    int slotScreenX = screenX + slot.x;
-                    int slotScreenY = screenY + slot.y;
-
-                    if (DEBUG_POSITIONS) {
-                        System.out.println("\n*** HIGHLIGHTING SEYMOUR PIECE ***");
-                        System.out.println("Item: " + itemName);
-                        System.out.println("Slot #" + slot.index + " at slot.x=" + slot.x + ", slot.y=" + slot.y);
-                        System.out.println("Final highlight position: " + slotScreenX + ", " + slotScreenY);
-                        System.out.println("Color: " + Integer.toHexString(cachedData.highlightColor));
-                    }
-
-                    drawSlotHighlight(guiGraphics, slotScreenX, slotScreenY, cachedData.highlightColor);
-
-                    // Draw debug markers
-                    if (DEBUG_POSITIONS) {
-                        // Draw a bright cyan border to show where we're drawing
-                        guiGraphics.fill(slotScreenX, slotScreenY, slotScreenX + 16, slotScreenY + 1, 0xFF00FFFF); // Top
-                        guiGraphics.fill(slotScreenX, slotScreenY + 15, slotScreenX + 16, slotScreenY + 16, 0xFF00FFFF); // Bottom
-                        guiGraphics.fill(slotScreenX, slotScreenY, slotScreenX + 1, slotScreenY + 16, 0xFF00FFFF); // Left
-                        guiGraphics.fill(slotScreenX + 15, slotScreenY, slotScreenX + 16, slotScreenY + 16, 0xFF00FFFF); // Right
-                    }
-                }
-            }
-
-            if (DEBUG_POSITIONS) {
-                System.out.println("======================\n");
-            }
-        } catch (Exception e) {
-            if (DEBUG_POSITIONS) {
-                System.err.println("Error in renderHighlights: " + e.getMessage());
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Get the screen X position using reflection, trying multiple field names
-     */
-    private int getScreenX(AbstractContainerScreen<?> screen) {
-        try {
-            // Try common field names used in different mappings
-            String[] fieldNames = {"x", "field_2888", "backgroundLeft"};
-            for (String fieldName : fieldNames) {
-                try {
-                    Field field = AbstractContainerScreen.class.getDeclaredField(fieldName);
-                    field.setAccessible(true);
-                    int value = (int) field.get(screen);
-                    if (DEBUG_POSITIONS) {
-                        System.out.println("Found screen X using field '" + fieldName + "': " + value);
-                    }
-                    return value;
-                } catch (NoSuchFieldException ignored) {
-                    // Try next field name
-                }
-            }
-        } catch (Exception e) {
-            if (DEBUG_POSITIONS) {
-                System.out.println("Exception getting screen X: " + e.getMessage());
-            }
-        }
-
-        // Fallback calculation
-        int fallback = (screen.width - 176) / 2;
-        if (DEBUG_POSITIONS) {
-            System.out.println("Using fallback screen X calculation: " + fallback);
-        }
-        return fallback;
-    }
-
-    /**
-     * Get the screen Y position using reflection, trying multiple field names
-     */
-    private int getScreenY(AbstractContainerScreen<?> screen) {
-        try {
-            // Try common field names used in different mappings
-            String[] fieldNames = {"y", "field_2890", "backgroundTop"};
-            for (String fieldName : fieldNames) {
-                try {
-                    Field field = AbstractContainerScreen.class.getDeclaredField(fieldName);
-                    field.setAccessible(true);
-                    int value = (int) field.get(screen);
-                    if (DEBUG_POSITIONS) {
-                        System.out.println("Found screen Y using field '" + fieldName + "': " + value);
-                    }
-                    return value;
-                } catch (NoSuchFieldException ignored) {
-                    // Try next field name
-                }
-            }
-        } catch (Exception e) {
-            if (DEBUG_POSITIONS) {
-                System.out.println("Exception getting screen Y: " + e.getMessage());
-            }
-        }
-
-        // Fallback calculation
-        int fallback = (screen.height - 166) / 2;
-        if (DEBUG_POSITIONS) {
-            System.out.println("Using fallback screen Y calculation: " + fallback);
-        }
-        return fallback;
     }
 
     /**

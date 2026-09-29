@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import schnerry.seymouranalyzer.SeymourAnalyzer;
 import schnerry.seymouranalyzer.data.ArmorPiece;
 import schnerry.seymouranalyzer.data.CollectionManager;
+import schnerry.seymouranalyzer.data.CollectionFingerprint;
 import schnerry.seymouranalyzer.data.WeightCalculator;
 import schnerry.seymouranalyzer.util.SkyBlockProfileTracker;
 
@@ -104,7 +105,7 @@ public final class WeightScreen extends ModScreen {
         List<ArmorPiece> selected = CollectionManager.getInstance().getCollection().values().stream()
             .filter(piece -> SkyBlockProfileTracker.ALL_PROFILES.equals(calculationProfileId)
                 || calculationProfileId.equals(piece.getProfileId())).toList();
-        String collectionFingerprint = collectionFingerprint(selected);
+        String collectionFingerprint = CollectionFingerprint.of(selected);
         CompletableFuture.runAsync(() -> {
             try {
                 WeightCalculator.Result calculated = WeightCalculator.calculate(selected, update -> {
@@ -473,7 +474,7 @@ public final class WeightScreen extends ModScreen {
 
     private WeightCalculator.Result cachedResultForCurrentCollection() {
         CachedResult cached = RESULTS_BY_PROFILE.get(selectedProfileId);
-        if (cached == null || !cached.collectionFingerprint.equals(collectionFingerprint(selectedPieces()))) return null;
+        if (cached == null || !cached.collectionFingerprint.equals(CollectionFingerprint.of(selectedPieces()))) return null;
         return cached.result;
     }
 
@@ -481,13 +482,6 @@ public final class WeightScreen extends ModScreen {
         return CollectionManager.getInstance().getCollection().values().stream()
             .filter(piece -> SkyBlockProfileTracker.ALL_PROFILES.equals(selectedProfileId)
                 || selectedProfileId.equals(piece.getProfileId())).toList();
-    }
-
-    private static String collectionFingerprint(List<ArmorPiece> pieces) {
-        return pieces.stream()
-            .map(piece -> String.valueOf(piece.getUuid()) + "|" + piece.getPieceName() + "|" + piece.getHexcode() + "|" + piece.getProfileId())
-            .sorted()
-            .reduce("", (hash, piece) -> Integer.toHexString((hash + "\n" + piece).hashCode()));
     }
 
     private static void logUnlistedMatches(WeightCalculator.Result calculated) {

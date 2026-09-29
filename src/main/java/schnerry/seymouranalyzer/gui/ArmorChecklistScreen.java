@@ -14,6 +14,7 @@ import schnerry.seymouranalyzer.SeymourAnalyzer;
 import schnerry.seymouranalyzer.config.ClothConfig;
 import schnerry.seymouranalyzer.data.ArmorPiece;
 import schnerry.seymouranalyzer.data.ChecklistCache;
+import schnerry.seymouranalyzer.data.ChecklistMatcher;
 import schnerry.seymouranalyzer.data.CollectionManager;
 import schnerry.seymouranalyzer.util.ColorMath;
 import schnerry.seymouranalyzer.util.PieceTypeUtil;
@@ -126,7 +127,10 @@ public class ArmorChecklistScreen extends ModScreen {
             }
 
             Gson gson = new Gson();
-            JsonObject root = gson.fromJson(new InputStreamReader(inputStream, StandardCharsets.UTF_8), JsonObject.class);
+            JsonObject root;
+            try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+                root = gson.fromJson(reader, JsonObject.class);
+            }
 
             // Load categories
             JsonObject categoriesJson = root.getAsJsonObject("categories");
@@ -216,7 +220,10 @@ public class ArmorChecklistScreen extends ModScreen {
             }
 
             Gson gson = new Gson();
-            JsonObject root = gson.fromJson(new InputStreamReader(inputStream, StandardCharsets.UTF_8), JsonObject.class);
+            JsonObject root;
+            try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+                root = gson.fromJson(reader, JsonObject.class);
+            }
             JsonObject fadeDyes = root.getAsJsonObject("FADE_DYES");
 
             if (fadeDyes == null) {
@@ -449,138 +456,21 @@ public class ArmorChecklistScreen extends ModScreen {
         categoryCache.category = currentCategory;
         categoryCache.isCalculating = true;
 
-        // For each piece type, build a list of all candidates across all stages
-
-        for (String pieceType : PieceTypeUtil.pieceTypes) {
-            List<CandidateMatch> candidates = new ArrayList<>();
-
-            // Build candidate list for ALL entries (not just those that need this piece type)
-            for (int stageIdx = 0; stageIdx < entries.size(); stageIdx++) {
-                ChecklistEntry entry = entries.get(stageIdx);
-
-                // Find all matching pieces for this stage and piece type
-                for (Map.Entry<String, ArmorPiece> collectionEntry : collection.entrySet()) {
-                    String uuid = collectionEntry.getKey();
-                    ArmorPiece piece = collectionEntry.getValue();
-                    String pieceName = piece.getPieceName().toLowerCase();
-                    boolean typeMatches = false;
-
-                    if (pieceType.equals("helmet") && (pieceName.contains("helm") || pieceName.contains("hat") || pieceName.contains("hood") || pieceName.contains("crown"))) {
-                        typeMatches = true;
-                    } else if (pieceType.equals("chestplate") && (pieceName.contains("chest") || pieceName.contains("tunic") || pieceName.contains("jacket"))) {
-                        typeMatches = true;
-                    } else if (pieceType.equals("leggings") && (pieceName.contains("legging") || pieceName.contains("pants") || pieceName.contains("trousers"))) {
-                        typeMatches = true;
-                    } else if (pieceType.equals("boots") && (pieceName.contains("boot") || pieceName.contains("shoes") || pieceName.contains("sneakers"))) {
-                        typeMatches = true;
-                    }
-
-                    if (typeMatches) {
-                        double deltaE = ColorMath.calculateDeltaE(entry.hex, piece.getHexcode());
-                        if (deltaE <= 5.0) {
-                            // Mark if this piece is actually needed for this entry
-                            boolean isNeeded = entry.pieces.contains(pieceType);
-                            candidates.add(new CandidateMatch(stageIdx, uuid, piece, deltaE, isNeeded));
-                        }
-                    }
-                }
-            }
-
-            // Sort candidates: first by priority (needed pieces first), then by deltaE
-            candidates.sort((a, b) -> {
-                if (a.isNeeded != b.isNeeded) {
-                    return a.isNeeded ? -1 : 1; // Needed pieces first
-                }
-                return Double.compare(a.deltaE, b.deltaE); // Then by quality
+        List<ChecklistMatcher.Stage> stages = entries.stream()
+            .map(entry -> new ChecklistMatcher.Stage(entry.hex, entry.pieces))
+            .toList();
+        List<Map<String, ChecklistMatcher.Match>> assignments = ChecklistMatcher.assign(
+            stages, collection, ArmorChecklistScreen::matchesChecklistPieceType);
+        for (int index = 0; index < entries.size(); index++) {
+            ChecklistEntry entry = entries.get(index);
+            assignments.get(index).forEach((pieceType, match) -> {
+                entry.foundPieces.put(pieceType, match.piece());
+                entry.foundPieceUuids.put(pieceType, match.uuid());
             });
-
-            // Required slots use each piece once so checklist completion remains accurate.
-            Set<String> usedPieces = new HashSet<>();
-            Set<Integer> assignedStages = new HashSet<>();
-
-            for (CandidateMatch candidate : candidates) {
-                if (!candidate.isNeeded) continue;
-                String uuid = candidate.uuid;
-
-                if (!usedPieces.contains(uuid) && !assignedStages.contains(candidate.stageIndex)) {
-                    // Assign this piece to this stage
-                    ChecklistEntry targetEntry = entries.get(candidate.stageIndex);
-                    targetEntry.foundPieces.put(pieceType, candidate.piece);
-                    targetEntry.foundPieceUuids.put(pieceType, uuid);
-                    usedPieces.add(uuid);
-                    assignedStages.add(candidate.stageIndex);
-                }
-            }
-
-            // Fill optional slots in checklist order with each remaining piece at most once.
-            for (int stageIndex = 0; stageIndex < entries.size(); stageIndex++) {
-                ChecklistEntry targetEntry = entries.get(stageIndex);
-                if (targetEntry.pieces.contains(pieceType)) continue;
-                for (CandidateMatch candidate : candidates) {
-                    if (!candidate.isNeeded && candidate.stageIndex == stageIndex && !usedPieces.contains(candidate.uuid)) {
-                        targetEntry.foundPieces.put(pieceType, candidate.piece);
-                        targetEntry.foundPieceUuids.put(pieceType, candidate.uuid);
-                        usedPieces.add(candidate.uuid);
-                        break;
-                    }
-                }
-            }
         }
-
-        // Save to cache
-        for (int i = 0; i < entries.size(); i++) {
-            ChecklistEntry entry = entries.get(i);
-            ChecklistCache.StageMatches stageMatches = new ChecklistCache.StageMatches();
-            stageMatches.stageHex = entry.hex;
-            stageMatches.calculated = true;
-
-            ArmorPiece helmet = entry.foundPieces.get("helmet");
-            if (helmet != null) {
-                String uuid = entry.foundPieceUuids.get("helmet");
-                stageMatches.helmet = new ChecklistCache.MatchInfo(
-                    helmet.getPieceName(),
-                    helmet.getHexcode(),
-                    ColorMath.calculateDeltaE(entry.hex, helmet.getHexcode()),
-                    uuid
-                );
-            }
-
-            ArmorPiece chestplate = entry.foundPieces.get("chestplate");
-            if (chestplate != null) {
-                String uuid = entry.foundPieceUuids.get("chestplate");
-                stageMatches.chestplate = new ChecklistCache.MatchInfo(
-                    chestplate.getPieceName(),
-                    chestplate.getHexcode(),
-                    ColorMath.calculateDeltaE(entry.hex, chestplate.getHexcode()),
-                    uuid
-                );
-            }
-
-            ArmorPiece leggings = entry.foundPieces.get("leggings");
-            if (leggings != null) {
-                String uuid = entry.foundPieceUuids.get("leggings");
-                stageMatches.leggings = new ChecklistCache.MatchInfo(
-                    leggings.getPieceName(),
-                    leggings.getHexcode(),
-                    ColorMath.calculateDeltaE(entry.hex, leggings.getHexcode()),
-                    uuid
-                );
-            }
-
-            ArmorPiece boots = entry.foundPieces.get("boots");
-            if (boots != null) {
-                String uuid = entry.foundPieceUuids.get("boots");
-                stageMatches.boots = new ChecklistCache.MatchInfo(
-                    boots.getPieceName(),
-                    boots.getHexcode(),
-                    ColorMath.calculateDeltaE(entry.hex, boots.getHexcode()),
-                    uuid
-                );
-            }
-
-            categoryCache.matchesByIndex.put(i, stageMatches);
+        for (int index = 0; index < entries.size(); index++) {
+            categoryCache.matchesByIndex.put(index, ChecklistMatcher.toCacheStage(stages.get(index), assignments.get(index)));
         }
-
         categoryCache.isCalculating = false;
 
         // The persisted cache represents the All view only; profile-specific results must not replace it.
@@ -595,21 +485,19 @@ public class ArmorChecklistScreen extends ModScreen {
         }
     }
 
-    // Helper class for optimal matching
-    private static class CandidateMatch {
-        int stageIndex;
-        String uuid;
-        ArmorPiece piece;
-        double deltaE;
-        boolean isNeeded; // True if this piece type is actually needed for this stage
-
-        CandidateMatch(int stageIndex, String uuid, ArmorPiece piece, double deltaE, boolean isNeeded) {
-            this.stageIndex = stageIndex;
-            this.uuid = uuid;
-            this.piece = piece;
-            this.deltaE = deltaE;
-            this.isNeeded = isNeeded;
-        }
+    private static boolean matchesChecklistPieceType(String pieceName, String pieceType) {
+        String lower = pieceName.toLowerCase();
+        return switch (pieceType) {
+            case "helmet" -> lower.contains("helm") || lower.contains("hat")
+                || lower.contains("hood") || lower.contains("crown");
+            case "chestplate" -> lower.contains("chest") || lower.contains("tunic")
+                || lower.contains("jacket");
+            case "leggings" -> lower.contains("legging") || lower.contains("pants")
+                || lower.contains("trousers");
+            case "boots" -> lower.contains("boot") || lower.contains("shoes")
+                || lower.contains("sneakers");
+            default -> false;
+        };
     }
 
     @Override

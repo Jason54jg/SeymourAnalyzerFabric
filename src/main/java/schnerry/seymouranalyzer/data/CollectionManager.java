@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Manages the collection of scanned armor pieces
@@ -40,18 +41,29 @@ public class CollectionManager {
     private final Map<String, ArmorPiece> collection = new ConcurrentHashMap<>();
     private final AtomicBoolean isDirty = new AtomicBoolean(false);
     private final AtomicBoolean isSaving = new AtomicBoolean(false);
+    private final AtomicBoolean saveQueued = new AtomicBoolean(false);
+    private final AtomicLong changeVersion = new AtomicLong();
+    private final Object saveLock = new Object();
     private boolean unsupportedDatabaseVersion;
     private long lastSaveTime = 0;
     private static final long SAVE_DEBOUNCE_MS = 2000; // Wait 2 seconds after last change before saving
     private int lastCollectionSize = 0; // Track size to detect changes
 
     private CollectionManager() {
+        this(resolveCollectionFile());
+    }
+
+    CollectionManager(File collectionFile) {
+        this.collectionFile = collectionFile;
+        load();
+    }
+
+    private static File resolveCollectionFile() {
         File configDir = new File(FabricLoader.getInstance().getConfigDir().toFile(), "seymouranalyzer");
         if (!configDir.exists() && !configDir.mkdirs()) {
             SeymourAnalyzer.LOGGER.error("Failed to create seymouranalyzer config directory");
         }
-        collectionFile = new File(configDir, "collection.json");
-        load();
+        return new File(configDir, "collection.json");
     }
 
     public static CollectionManager getInstance() {
@@ -64,7 +76,10 @@ public class CollectionManager {
     public void load() {
         try {
             if (collectionFile.exists()) {
-                JsonObject json = GSON.fromJson(new FileReader(collectionFile), JsonObject.class);
+                JsonObject json;
+                try (FileReader reader = new FileReader(collectionFile)) {
+                    json = GSON.fromJson(reader, JsonObject.class);
+                }
                 int version = json.has("databaseVersion") ? json.get("databaseVersion").getAsInt() : 0;
                 if (version > DataVersions.DATABASE) {
                     unsupportedDatabaseVersion = true;
@@ -109,41 +124,41 @@ public class CollectionManager {
     }
 
     private void saveSync() {
-        if (unsupportedDatabaseVersion) {
-            SeymourAnalyzer.LOGGER.error("Skipping collection save because the database schema is newer than this mod supports");
-            return;
-        }
-        if (isSaving.get()) {
-            SeymourAnalyzer.LOGGER.warn("Save already in progress, skipping");
-            return;
-        }
-
-        isSaving.set(true);
-        try {
-            JsonObject json = new JsonObject();
-            json.addProperty("databaseVersion", DataVersions.DATABASE);
-            JsonObject pieces = new JsonObject();
-            collection.forEach((uuid, piece) -> pieces.add(uuid, GSON.toJsonTree(piece)));
-            json.add("pieces", pieces);
-
-            try (FileWriter writer = new FileWriter(collectionFile)) {
-                GSON.toJson(json, writer);
+        synchronized (saveLock) {
+            if (unsupportedDatabaseVersion) {
+                SeymourAnalyzer.LOGGER.error("Skipping collection save because the database schema is newer than this mod supports");
+                return;
             }
 
-            isDirty.set(false);
-            lastSaveTime = System.currentTimeMillis();
-            SeymourAnalyzer.LOGGER.info("Saved {} armor pieces to collection", collection.size());
-        } catch (Exception e) {
-            SeymourAnalyzer.LOGGER.error("Failed to save collection", e);
-        } finally {
-            isSaving.set(false);
+            isSaving.set(true);
+            long versionAtStart = changeVersion.get();
+            try {
+                JsonObject json = new JsonObject();
+                json.addProperty("databaseVersion", DataVersions.DATABASE);
+                JsonObject pieces = new JsonObject();
+                collection.forEach((uuid, piece) -> pieces.add(uuid, GSON.toJsonTree(piece)));
+                json.add("pieces", pieces);
+
+                try (FileWriter writer = new FileWriter(collectionFile)) {
+                    GSON.toJson(json, writer);
+                }
+
+                isDirty.set(false);
+                if (changeVersion.get() != versionAtStart) {
+                    isDirty.set(true);
+                }
+                lastSaveTime = System.currentTimeMillis();
+                SeymourAnalyzer.LOGGER.info("Saved {} armor pieces to collection", collection.size());
+            } catch (Exception e) {
+                SeymourAnalyzer.LOGGER.error("Failed to save collection", e);
+            } finally {
+                isSaving.set(false);
+            }
         }
     }
 
     private void saveAsync() {
-        if (isSaving.get()) {
-            return; // Already saving
-        }
+        if (!saveQueued.compareAndSet(false, true)) return;
 
         SAVE_EXECUTOR.submit(() -> {
             try {
@@ -151,6 +166,8 @@ public class CollectionManager {
                 saveSync();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+            } finally {
+                saveQueued.set(false);
             }
         });
     }
@@ -159,6 +176,7 @@ public class CollectionManager {
      * Mark collection as dirty (needs save). Will trigger async save after debounce period.
      */
     private void markDirty() {
+        changeVersion.incrementAndGet();
         isDirty.set(true);
         lastSaveTime = System.currentTimeMillis();
     }
@@ -167,7 +185,7 @@ public class CollectionManager {
      * Called every tick to handle auto-save and cache regeneration
      */
     public void tick() {
-        if (isDirty.get() && !isSaving.get()) {
+        if (isDirty.get() && !isSaving.get() && !saveQueued.get()) {
             long timeSinceLastChange = System.currentTimeMillis() - lastSaveTime;
             if (timeSinceLastChange >= SAVE_DEBOUNCE_MS) {
                 saveAsync();
@@ -225,8 +243,10 @@ public class CollectionManager {
      * Force immediate synchronous save (use when stopping scan or on shutdown)
      */
     public void forceSync() {
-        if (isDirty.get()) {
-            saveSync();
+        synchronized (saveLock) {
+            if (isDirty.get()) {
+                saveSync();
+            }
         }
     }
 

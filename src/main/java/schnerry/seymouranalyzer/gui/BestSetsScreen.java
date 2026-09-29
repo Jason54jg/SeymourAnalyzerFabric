@@ -9,6 +9,7 @@ import schnerry.seymouranalyzer.SeymourAnalyzer;
 import schnerry.seymouranalyzer.config.ClothConfig;
 import schnerry.seymouranalyzer.data.ArmorPiece;
 import schnerry.seymouranalyzer.data.CollectionManager;
+import schnerry.seymouranalyzer.data.CollectionFingerprint;
 import schnerry.seymouranalyzer.util.ColorMath;
 import schnerry.seymouranalyzer.util.PieceTypeUtil;
 import schnerry.seymouranalyzer.util.SkyBlockProfileTracker;
@@ -18,15 +19,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
- * Best Sets GUI - finds the truly optimal best matching 4-piece armor sets
+ * Best Sets GUI - finds matching 4-piece armor sets
  * <p>
  * Algorithm:
  * 1. Generates ALL valid 4-piece combinations (where all pairwise ΔE ≤ 5.0)
  * 2. Sorts all combinations by average ΔE (best to worst)
  * 3. Greedily selects non-overlapping sets from the sorted list
  * <p>
- * This guarantees the best possible sets based on average ΔE,
- * with each piece used only once across all selected sets.
+ * Each piece is used only once across the greedily selected sets.
  */
 public class BestSetsScreen extends ModScreen {
     private List<ArmorSet> bestSets = new ArrayList<>();
@@ -39,12 +39,9 @@ public class BestSetsScreen extends ModScreen {
     private boolean profileSelected;
     private boolean hasCalculated;
 
-    // Static cache to persist results across GUI opens/closes
-    private static List<ArmorSet> cachedBestSets = null;
-    private static int cachedCollectionSize = -1;
-    private static long cacheTimestamp = 0;
-    private static boolean cachedUnderDeltaTwoOnly;
-    private static String cachedProfileId;
+    private record CachedSets(List<ArmorSet> sets, String collectionFingerprint, long timestamp,
+                              boolean underDeltaTwoOnly, String profileId) {}
+    private static volatile CachedSets cachedBestSets;
 
     private static final int MAX_SETS = 100;
     private static final double MAX_DELTA_E = 5.0;
@@ -56,15 +53,16 @@ public class BestSetsScreen extends ModScreen {
         super(Component.literal("Best Matching Sets"), parent);
 
         // Load from cache if valid
-        int currentSize = CollectionManager.getInstance().getCollection().size();
+        String currentFingerprint = CollectionFingerprint.of(CollectionManager.getInstance().getCollection().values());
         long currentTime = System.currentTimeMillis();
+        CachedSets cached = cachedBestSets;
 
-        if (cachedBestSets != null &&
-            cachedCollectionSize == currentSize &&
-            cachedUnderDeltaTwoOnly == ClothConfig.getInstance().isBestSetsUnderDeltaTwoOnly() &&
-            Objects.equals(cachedProfileId, selectedProfileId) &&
-            (currentTime - cacheTimestamp) < CACHE_VALIDITY_MS) {
-            bestSets = new ArrayList<>(cachedBestSets);
+        if (cached != null &&
+            Objects.equals(cached.collectionFingerprint(), currentFingerprint) &&
+            cached.underDeltaTwoOnly() == ClothConfig.getInstance().isBestSetsUnderDeltaTwoOnly() &&
+            Objects.equals(cached.profileId(), selectedProfileId) &&
+            (currentTime - cached.timestamp()) < CACHE_VALIDITY_MS) {
+            bestSets = new ArrayList<>(cached.sets());
             SeymourAnalyzer.LOGGER.info("[Best Sets] Loaded {} sets from cache", bestSets.size());
         }
     }
@@ -412,6 +410,8 @@ public class BestSetsScreen extends ModScreen {
     }
 
     private void calculateBestSets() {
+        String calculationProfileId = selectedProfileId;
+        boolean underDeltaTwoOnly = ClothConfig.getInstance().isBestSetsUnderDeltaTwoOnly();
         isCalculating = true;
         calculationProgress = 0;
         bestSets.clear();
@@ -423,7 +423,7 @@ public class BestSetsScreen extends ModScreen {
         // Run calculation asynchronously
         CompletableFuture.runAsync(() -> {
             try {
-                performCalculation();
+                performCalculation(calculationProfileId, underDeltaTwoOnly);
             } catch (Exception e) {
                 SeymourAnalyzer.LOGGER.error("[Best Sets] Calculation failed", e);
             } finally {
@@ -436,14 +436,15 @@ public class BestSetsScreen extends ModScreen {
         });
     }
 
-    private void performCalculation() {
+    private void performCalculation(String calculationProfileId, boolean underDeltaTwoOnly) {
         long startTime = System.currentTimeMillis();
 
         // Categorize pieces by type
         Map<String, ArmorPiece> collection = CollectionManager.getInstance().getCollection();
-        if (!SkyBlockProfileTracker.ALL_PROFILES.equals(selectedProfileId)) {
+        String sourceFingerprint = CollectionFingerprint.of(collection.values());
+        if (!SkyBlockProfileTracker.ALL_PROFILES.equals(calculationProfileId)) {
             collection = collection.entrySet().stream()
-                .filter(entry -> selectedProfileId.equals(entry.getValue().getProfileId()))
+                .filter(entry -> calculationProfileId.equals(entry.getValue().getProfileId()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         }
 
@@ -586,7 +587,6 @@ public class BestSetsScreen extends ModScreen {
         // Select the best non-overlapping sets (greedy selection from sorted list)
         List<ArmorSet> selectedSets = new ArrayList<>();
         Set<String> usedUuids = new HashSet<>();
-        boolean underDeltaTwoOnly = ClothConfig.getInstance().isBestSetsUnderDeltaTwoOnly();
 
         for (ArmorSet set : allValidSets) {
             if (underDeltaTwoOnly && set.avgDeltaE >= 2.0) {
@@ -614,21 +614,20 @@ public class BestSetsScreen extends ModScreen {
 
         calculationProgress = 95;
 
-        bestSets = selectedSets;
-        hasCalculated = true;
-
-        // Save to cache
-        cachedBestSets = new ArrayList<>(bestSets);
-        cachedCollectionSize = collection.size();
-        cacheTimestamp = System.currentTimeMillis();
-        cachedUnderDeltaTwoOnly = ClothConfig.getInstance().isBestSetsUnderDeltaTwoOnly();
-        cachedProfileId = selectedProfileId;
+        cachedBestSets = new CachedSets(new ArrayList<>(selectedSets), sourceFingerprint,
+            System.currentTimeMillis(), underDeltaTwoOnly, calculationProfileId);
+        this.minecraft.execute(() -> {
+            if (Objects.equals(selectedProfileId, calculationProfileId)) {
+                bestSets = selectedSets;
+                hasCalculated = true;
+            }
+        });
 
         long endTime = System.currentTimeMillis();
         long totalTimeMs = endTime - startTime;
         double totalTimeSec = totalTimeMs / 1000.0;
         SeymourAnalyzer.LOGGER.info("[Best Sets] Selected {} optimal sets in {}ms ({} seconds)",
-            bestSets.size(), totalTimeMs, String.format("%.2f", totalTimeSec));
+            selectedSets.size(), totalTimeMs, String.format("%.2f", totalTimeSec));
     }
 
     /**

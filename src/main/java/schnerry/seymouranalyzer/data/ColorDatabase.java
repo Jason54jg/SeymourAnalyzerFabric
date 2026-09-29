@@ -37,7 +37,10 @@ public class ColorDatabase {
         try {
             InputStream stream = getClass().getResourceAsStream("/data/seymouranalyzer/colors.json");
             if (stream != null) {
-                JsonObject json = new Gson().fromJson(new InputStreamReader(stream), JsonObject.class);
+                JsonObject json;
+                try (InputStreamReader reader = new InputStreamReader(stream)) {
+                    json = new Gson().fromJson(reader, JsonObject.class);
+                }
 
                 if (json.has("TARGET_COLORS")) {
                     JsonObject colors = json.getAsJsonObject("TARGET_COLORS");

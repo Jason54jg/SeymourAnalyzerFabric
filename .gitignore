@@ -55,6 +55,7 @@ run/servers.dat
 run/usercache.json
 run/usernamecache.json
 run/logs/
+/logs/
 
 # Loom
 .fabric/

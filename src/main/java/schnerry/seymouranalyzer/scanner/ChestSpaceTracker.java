@@ -78,7 +78,10 @@ public class ChestSpaceTracker {
     public void load() {
         try {
             if (cacheFile.exists()) {
-                JsonObject json = GSON.fromJson(new FileReader(cacheFile), JsonObject.class);
+                JsonObject json;
+                try (FileReader reader = new FileReader(cacheFile)) {
+                    json = GSON.fromJson(reader, JsonObject.class);
+                }
                 
                 json.entrySet().forEach(entry -> {
                     try {
