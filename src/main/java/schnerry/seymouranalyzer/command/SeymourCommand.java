@@ -43,7 +43,7 @@ public class SeymourCommand {
 
     private static final String[] TOGGLE_OPTIONS = {
         "infobox", "highlights", "fade", "3p", "sets", "words", "pattern",
-        "custom", "dupes", "highfades", "itemframes", "hextooltip", "hexcolor",
+        "custom", "dupes", "highfades", "highfakes", "itemframes", "scanonlyownisland", "hextooltip", "hexcolor",
         "autoroll", "dbcompare", "autopin"
     };
 
@@ -269,9 +269,9 @@ public class SeymourCommand {
 
     private static int showProfilesHelp(CommandContext<FabricClientCommandSource> ctx) {
         ctx.getSource().sendFeedback(Component.literal("§a[Seymour] §7Profile commands:"));
-        ctx.getSource().sendFeedback(Component.literal("§f/seymour profiles set <name> §8- Set a custom name for the active profile"));
-        ctx.getSource().sendFeedback(Component.literal("§f/seymour profiles reset §8- Restore the Hypixel profile name"));
-        ctx.getSource().sendFeedback(Component.literal("§f/seymour profiles list §8- List stored profiles"));
+        suggestCommandLine(ctx, "/seymour profiles set ", "§f/seymour profiles set <name> §8- Set a custom name for the active profile");
+        sendCommandLine(ctx, "/seymour profiles reset", "§f/seymour profiles reset §8- Restore the Hypixel profile name");
+        sendCommandLine(ctx, "/seymour profiles list", "§f/seymour profiles list §8- List stored profiles");
         return 1;
     }
 
@@ -324,26 +324,38 @@ public class SeymourCommand {
     private static int showHelp(CommandContext<FabricClientCommandSource> ctx) {
         ctx.getSource().sendFeedback(Component.literal("§8§m----------------------------------------------------"));
         ctx.getSource().sendFeedback(Component.literal("§a§l[Seymour Analyzer] §7Commands:"));
-        ctx.getSource().sendFeedback(Component.literal("§f/seymour §7- Show this help menu"));
-        ctx.getSource().sendFeedback(Component.literal("§b/seymour config §7- Open config GUI (or press I)"));
-        ctx.getSource().sendFeedback(Component.literal("§b/seymour priorities §7- Edit match priority order"));
-        ctx.getSource().sendFeedback(Component.literal("§e/seymour list §7- List all custom colors"));
-        ctx.getSource().sendFeedback(Component.literal("§e/seymour word list §7- List all custom words"));
-        ctx.getSource().sendFeedback(Component.literal("§2/seymour scan start/stop §7- Start/stop chest scanning"));
-        ctx.getSource().sendFeedback(Component.literal("§2/seymour export start/stop §7- Start/stop clipboard export"));
-        ctx.getSource().sendFeedback(Component.literal("§2/seymour search <hexes> §7- Highlight chests with hex codes"));
-        ctx.getSource().sendFeedback(Component.literal("§8/seymour compare <hexes> §7- Compare multiple hex codes"));
-        ctx.getSource().sendFeedback(Component.literal("§6/seymour weight §7- Calculate collection weight"));
-        ctx.getSource().sendFeedback(Component.literal("§2/seymour toggle <option> §7- Toggle settings"));
-        ctx.getSource().sendFeedback(Component.literal("§4/seymour clear §7- Clear all caches & collection"));
-        ctx.getSource().sendFeedback(Component.literal("§8/seymour stats §7- Print the amount of T1/T2/Dupes"));
-        ctx.getSource().sendFeedback(Component.literal("§5/seymour roll §7- Open gambling roll animation"));
-        ctx.getSource().sendFeedback(Component.literal("§9/seymour discord §7- Open Seymour Cafe Discord invite"));
+        sendCommandLine(ctx, "/seymour", "§f/seymour §7- Show this help menu");
+        sendCommandLine(ctx, "/seymour config", "§b/seymour config §7- Open config GUI (or press I)");
+        sendCommandLine(ctx, "/seymour priorities", "§b/seymour priorities §7- Edit match priority order");
+        sendCommandLine(ctx, "/seymour list", "§e/seymour list §7- List all custom colors");
+        sendCommandLine(ctx, "/seymour word list", "§e/seymour word list §7- List all custom words");
+        sendCommandLine(ctx, "/seymour scan start", "§2/seymour scan start §7- Start chest scanning");
+        sendCommandLine(ctx, "/seymour scan stop", "§2/seymour scan stop §7- Stop chest scanning");
+        sendCommandLine(ctx, "/seymour export start", "§2/seymour export start §7- Start clipboard export");
+        sendCommandLine(ctx, "/seymour export stop", "§2/seymour export stop §7- Stop clipboard export");
+        suggestCommandLine(ctx, "/seymour search ", "§2/seymour search <hexes> §7- Highlight chests with hex codes");
+        suggestCommandLine(ctx, "/seymour compare ", "§8/seymour compare <hexes> §7- Compare multiple hex codes");
+        sendCommandLine(ctx, "/seymour weight", "§6/seymour weight §7- Calculate collection weight");
+        suggestCommandLine(ctx, "/seymour toggle ", "§2/seymour toggle <option> §7- Toggle settings");
+        sendCommandLine(ctx, "/seymour clear", "§4/seymour clear §7- Clear all caches & collection");
+        sendCommandLine(ctx, "/seymour stats", "§8/seymour stats §7- Print the amount of T1/T2/Dupes");
+        sendCommandLine(ctx, "/seymour roll", "§5/seymour roll §7- Open gambling roll animation");
+        sendCommandLine(ctx, "/seymour discord", "§9/seymour discord §7- Open Seymour Cafe Discord invite");
 
         int size = CollectionManager.getInstance().size();
         ctx.getSource().sendFeedback(Component.literal("§7Collection: §e" + size + " §7pieces"));
         ctx.getSource().sendFeedback(Component.literal("§8§m----------------------------------------------------"));
         return 1;
+    }
+
+    private static void sendCommandLine(CommandContext<FabricClientCommandSource> ctx, String command, String text) {
+        ctx.getSource().sendFeedback(Component.literal(text)
+            .withStyle(style -> style.withClickEvent(new ClickEvent.RunCommand(command))));
+    }
+
+    private static void suggestCommandLine(CommandContext<FabricClientCommandSource> ctx, String command, String text) {
+        ctx.getSource().sendFeedback(Component.literal(text)
+            .withStyle(style -> style.withClickEvent(new ClickEvent.SuggestCommand(command))));
     }
 
     private static int toggleOption(CommandContext<FabricClientCommandSource> ctx) {
@@ -413,10 +425,11 @@ public class SeymourCommand {
                 ctx.getSource().sendFeedback(Component.literal("§a[Seymour Analyzer] §7Item frame scanning " +
                     (config.isItemFramesEnabled() ? "§aenabled" : "§cdisabled") + "§7!"));
                 break;
-            case "scanOnlyOwnIsland":
+            case "scanonlyownisland":
                 config.setScanOnlyOwnIsland(!config.isScanOnlyOwnIsland());
-                ctx.getSource().sendFeedback(Component.literal("$a[Seymour Analyzer] §7 Scanning on other islands " +
+                ctx.getSource().sendFeedback(Component.literal("§a[Seymour Analyzer] §7Scanning on other islands " +
                         (config.isScanOnlyOwnIsland() ? "§cdisabled" : "§aenabled") + "§7!"));
+                break;
             case "hextooltip":
                 boolean newState = !HexTooltipRenderer.getInstance().isEnabled();
                 HexTooltipRenderer.getInstance().setEnabled(newState);
@@ -458,27 +471,27 @@ public class SeymourCommand {
     private static int showToggleHelp(CommandContext<FabricClientCommandSource> ctx) {
         ClothConfig config = ClothConfig.getInstance();
 
-        ctx.getSource().sendFeedback(Component.literal("§c[Seymour] §7Usage: §f/seymour toggle <option>"));
+        suggestCommandLine(ctx, "/seymour toggle ", "§c[Seymour] §7Usage: §f/seymour toggle <option>");
         ctx.getSource().sendFeedback(Component.literal("§7Available options (§a✓§7 = enabled, §c✗§7 = disabled):"));
 
-        ctx.getSource().sendFeedback(Component.literal("  §einfobox §8- " + getToggleIndicator(config.isInfoBoxEnabled()) + " §7Toggle info box display"));
-        ctx.getSource().sendFeedback(Component.literal("  §ehighlights §8- " + getToggleIndicator(config.isHighlightsEnabled()) + " §7Toggle item slot highlights"));
-        ctx.getSource().sendFeedback(Component.literal("  §efade §8- " + getToggleIndicator(config.isFadeDyesEnabled()) + " §7Toggle fade dye matching"));
-        ctx.getSource().sendFeedback(Component.literal("  §e3p §8- " + getToggleIndicator(config.isThreePieceSetsEnabled()) + " §7Toggle 3-piece sets filter"));
-        ctx.getSource().sendFeedback(Component.literal("  §esets §8- " + getToggleIndicator(config.isPieceSpecificEnabled()) + " §7Toggle piece-specific matching"));
-        ctx.getSource().sendFeedback(Component.literal("  §ewords §8- " + getToggleIndicator(config.isWordsEnabled()) + " §7Toggle word highlights"));
-        ctx.getSource().sendFeedback(Component.literal("  §epattern §8- " + getToggleIndicator(config.isPatternsEnabled()) + " §7Toggle pattern highlights"));
-        ctx.getSource().sendFeedback(Component.literal("  §ecustom §8- " + getToggleIndicator(config.isCustomColorsEnabled()) + " §7Toggle custom colors"));
-        ctx.getSource().sendFeedback(Component.literal("  §edupes §8- " + getToggleIndicator(config.isDupesEnabled()) + " §7Toggle dupe highlights"));
-        ctx.getSource().sendFeedback(Component.literal("  §ehighfades §8- " + getToggleIndicator(config.isShowHighFades()) + " §7Toggle high fade matches (T2+)"));
-        ctx.getSource().sendFeedback(Component.literal("  §ehighfakes §8- " + getToggleIndicator(config.isShowHighFakes()) + " §7Toggle high fake piece matches (T2+, wrong-slot piece-specific colors)"));
-        ctx.getSource().sendFeedback(Component.literal("  §eitemframes §8- " + getToggleIndicator(config.isItemFramesEnabled()) + " §7Toggle item frame scanning"));
-        ctx.getSource().sendFeedback(Component.literal("  §escanonlyownisland §8- " + getToggleIndicator(config.isScanOnlyOwnIsland()) + " §7Toggle scanning on other islands"));
-        ctx.getSource().sendFeedback(Component.literal("  §ehextooltip §8- " + getToggleIndicator(schnerry.seymouranalyzer.render.HexTooltipRenderer.getInstance().isEnabled()) + " §7Toggle hex tooltip display"));
-        ctx.getSource().sendFeedback(Component.literal("  §ehexcolor §8- " + getToggleIndicator(config.isColoredHexText()) + " §7Toggle colored hex text"));
-        ctx.getSource().sendFeedback(Component.literal("  §eautoroll §8- " + getToggleIndicator(config.isAutoRollOnVisitor()) + " §7Toggle auto roll on Seymour visitor"));
-        ctx.getSource().sendFeedback(Component.literal("  §edbcompare §8- " + getToggleIndicator(config.isDbCompareEnabled()) + " §7Toggle DB Compare in shift tooltip"));
-        ctx.getSource().sendFeedback(Component.literal("  §eautopin §8- " + getToggleIndicator(config.isAutoPinGui()) + " §7Auto set Pin Toggle in GUI (always remembers position)"));
+        sendCommandLine(ctx, "/seymour toggle infobox", "  §einfobox §8- " + getToggleIndicator(config.isInfoBoxEnabled()) + " §7Toggle info box display");
+        sendCommandLine(ctx, "/seymour toggle highlights", "  §ehighlights §8- " + getToggleIndicator(config.isHighlightsEnabled()) + " §7Toggle item slot highlights");
+        sendCommandLine(ctx, "/seymour toggle fade", "  §efade §8- " + getToggleIndicator(config.isFadeDyesEnabled()) + " §7Toggle fade dye matching");
+        sendCommandLine(ctx, "/seymour toggle 3p", "  §e3p §8- " + getToggleIndicator(config.isThreePieceSetsEnabled()) + " §7Toggle 3-piece sets filter");
+        sendCommandLine(ctx, "/seymour toggle sets", "  §esets §8- " + getToggleIndicator(config.isPieceSpecificEnabled()) + " §7Toggle piece-specific matching");
+        sendCommandLine(ctx, "/seymour toggle words", "  §ewords §8- " + getToggleIndicator(config.isWordsEnabled()) + " §7Toggle word highlights");
+        sendCommandLine(ctx, "/seymour toggle pattern", "  §epattern §8- " + getToggleIndicator(config.isPatternsEnabled()) + " §7Toggle pattern highlights");
+        sendCommandLine(ctx, "/seymour toggle custom", "  §ecustom §8- " + getToggleIndicator(config.isCustomColorsEnabled()) + " §7Toggle custom colors");
+        sendCommandLine(ctx, "/seymour toggle dupes", "  §edupes §8- " + getToggleIndicator(config.isDupesEnabled()) + " §7Toggle dupe highlights");
+        sendCommandLine(ctx, "/seymour toggle highfades", "  §ehighfades §8- " + getToggleIndicator(config.isShowHighFades()) + " §7Toggle high fade matches (T2+)");
+        sendCommandLine(ctx, "/seymour toggle highfakes", "  §ehighfakes §8- " + getToggleIndicator(config.isShowHighFakes()) + " §7Toggle high fake piece matches (T2+, wrong-slot piece-specific colors)");
+        sendCommandLine(ctx, "/seymour toggle itemframes", "  §eitemframes §8- " + getToggleIndicator(config.isItemFramesEnabled()) + " §7Toggle item frame scanning");
+        sendCommandLine(ctx, "/seymour toggle scanonlyownisland", "  §escanonlyownisland §8- " + getToggleIndicator(config.isScanOnlyOwnIsland()) + " §7Toggle scanning on other islands");
+        sendCommandLine(ctx, "/seymour toggle hextooltip", "  §ehextooltip §8- " + getToggleIndicator(HexTooltipRenderer.getInstance().isEnabled()) + " §7Toggle hex tooltip display");
+        sendCommandLine(ctx, "/seymour toggle hexcolor", "  §ehexcolor §8- " + getToggleIndicator(config.isColoredHexText()) + " §7Toggle colored hex text");
+        sendCommandLine(ctx, "/seymour toggle autoroll", "  §eautoroll §8- " + getToggleIndicator(config.isAutoRollOnVisitor()) + " §7Toggle auto roll on Seymour visitor");
+        sendCommandLine(ctx, "/seymour toggle dbcompare", "  §edbcompare §8- " + getToggleIndicator(config.isDbCompareEnabled()) + " §7Toggle DB Compare in shift tooltip");
+        sendCommandLine(ctx, "/seymour toggle autopin", "  §eautopin §8- " + getToggleIndicator(config.isAutoPinGui()) + " §7Auto set Pin Toggle in GUI (always remembers position)");
         return 0;
     }
 
@@ -487,18 +500,18 @@ public class SeymourCommand {
     }
 
     private static int showScanHelp(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Component.literal("§c[Seymour] §7Usage: §f/seymour scan <start|stop>"));
-        ctx.getSource().sendFeedback(Component.literal("  §f/seymour scan start §8- Start scanning chests"));
-        ctx.getSource().sendFeedback(Component.literal("  §f/seymour scan stop §8- Stop scanning chests"));
+        suggestCommandLine(ctx, "/seymour scan ", "§c[Seymour] §7Usage: §f/seymour scan <start|stop>");
+        sendCommandLine(ctx, "/seymour scan start", "  §f/seymour scan start §8- Start scanning chests");
+        sendCommandLine(ctx, "/seymour scan stop", "  §f/seymour scan stop §8- Stop scanning chests");
         return 0;
     }
 
     private static int showExportHelp(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Component.literal("§c[Seymour] §7Usage: §f/seymour export <start|stop|database|profile>"));
-        ctx.getSource().sendFeedback(Component.literal("  §f/seymour export start §8- Start export mode"));
-        ctx.getSource().sendFeedback(Component.literal("  §f/seymour export stop §8- Stop and copy scanned pieces to clipboard"));
-        ctx.getSource().sendFeedback(Component.literal("  §f/seymour export database §8- Export entire database to clipboard"));
-        ctx.getSource().sendFeedback(Component.literal("  §f/seymour export profile <profile> §8- Export one profile to clipboard"));
+        suggestCommandLine(ctx, "/seymour export ", "§c[Seymour] §7Usage: §f/seymour export <start|stop|database|profile>");
+        sendCommandLine(ctx, "/seymour export start", "  §f/seymour export start §8- Start export mode");
+        sendCommandLine(ctx, "/seymour export stop", "  §f/seymour export stop §8- Stop and copy scanned pieces to clipboard");
+        sendCommandLine(ctx, "/seymour export database", "  §f/seymour export database §8- Export entire database to clipboard");
+        suggestCommandLine(ctx, "/seymour export profile ", "  §f/seymour export profile <profile> §8- Export one profile to clipboard");
         return 0;
     }
 
@@ -512,7 +525,7 @@ public class SeymourCommand {
     }
 
     private static int showAddHelp(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Component.literal("§c[Seymour] §7Usage: §f/seymour add <color name> <hex>"));
+        suggestCommandLine(ctx, "/seymour add ", "§c[Seymour] §7Usage: §f/seymour add <color name> <hex>");
         ctx.getSource().sendFeedback(Component.literal("§7The hex code must be the last word (6 characters)."));
         ctx.getSource().sendFeedback(Component.literal("§7Examples:"));
         ctx.getSource().sendFeedback(Component.literal("  §f/seymour add My Cool Color FF5733"));
@@ -522,7 +535,7 @@ public class SeymourCommand {
     }
 
     private static int showRemoveHelp(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Component.literal("§c[Seymour] §7Usage: §f/seymour remove <ColorName>"));
+        suggestCommandLine(ctx, "/seymour remove ", "§c[Seymour] §7Usage: §f/seymour remove <ColorName>");
         ctx.getSource().sendFeedback(Component.literal("§7Example: §f/seymour remove My Cool Color"));
         ctx.getSource().sendFeedback(Component.literal("§7This removes a custom color from the list."));
         ctx.getSource().sendFeedback(Component.literal("§7Use §f/seymour list §7to see all custom colors."));
@@ -530,18 +543,18 @@ public class SeymourCommand {
     }
 
     private static int showWordHelp(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Component.literal("§c[Seymour] §7Usage: §f/seymour word <add|remove|list>"));
-        ctx.getSource().sendFeedback(Component.literal("  §f/seymour word add <word> <pattern> §8- Add custom word (pattern may include X, W, Y, Z wildcards)"));
-        ctx.getSource().sendFeedback(Component.literal("  §f/seymour word remove <word> §8- Remove custom word"));
-        ctx.getSource().sendFeedback(Component.literal("  §f/seymour word list §8- List all custom words"));
+        suggestCommandLine(ctx, "/seymour word ", "§c[Seymour] §7Usage: §f/seymour word <add|remove|list>");
+        suggestCommandLine(ctx, "/seymour word add ", "  §f/seymour word add <word> <pattern> §8- Add custom word (pattern may include X, W, Y, Z wildcards)");
+        suggestCommandLine(ctx, "/seymour word remove ", "  §f/seymour word remove <word> §8- Remove custom word");
+        sendCommandLine(ctx, "/seymour word list", "  §f/seymour word list §8- List all custom words");
         ctx.getSource().sendFeedback(Component.literal("§7Example: §f/seymour word add cool C001"));
         return 0;
     }
 
     private static int showSearchHelp(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Component.literal("§c[Seymour] §7Usage: §f/seymour search <hex>"));
-        ctx.getSource().sendFeedback(Component.literal("  §f/seymour search <hex> §8- Search for pieces with hex"));
-        ctx.getSource().sendFeedback(Component.literal("  §f/seymour search clear §8- Clear search highlights"));
+        suggestCommandLine(ctx, "/seymour search ", "§c[Seymour] §7Usage: §f/seymour search <hex>");
+        suggestCommandLine(ctx, "/seymour search ", "  §f/seymour search <hex> §8- Search for pieces with hex");
+        sendCommandLine(ctx, "/seymour search clear", "  §f/seymour search clear §8- Clear search highlights");
         ctx.getSource().sendFeedback(Component.literal("§7Example: §f/seymour search FF5733"));
         return 0;
     }
@@ -850,7 +863,7 @@ public class SeymourCommand {
             ctx.getSource().sendFeedback(Component.literal("§c§lDuplicates:"));
             ctx.getSource().sendFeedback(Component.literal("  §7Unique hex codes with dupes: §c" + dupeHexCount));
             ctx.getSource().sendFeedback(Component.literal("  §7Total pieces in dupes: §c" + totalDupes));
-            ctx.getSource().sendFeedback(Component.literal("  §8(Use §c/seymour search <hex> §8to find them)"));
+            suggestCommandLine(ctx, "/seymour search ", "  §8(Use §c/seymour search <hex> §8to find them)");
         } else {
             ctx.getSource().sendFeedback(Component.literal("§a✓ No duplicate hex codes found!"));
         }
@@ -1380,10 +1393,10 @@ public class SeymourCommand {
     private static int showRebuildHelp(CommandContext<FabricClientCommandSource> ctx) {
         ctx.getSource().sendFeedback(Component.literal("§8§m----------------------------------------------------"));
         ctx.getSource().sendFeedback(Component.literal("§a§l[Seymour Analyzer] §7- Rebuild Commands:"));
-        ctx.getSource().sendFeedback(Component.literal("§e/seymour rebuild words §7- Rebuild word matches"));
-        ctx.getSource().sendFeedback(Component.literal("§e/seymour rebuild analysis §7- Rebuild analysis with current toggles"));
-        ctx.getSource().sendFeedback(Component.literal("§e/seymour rebuild matches §7- Rebuild top 3 match data"));
-        ctx.getSource().sendFeedback(Component.literal("§e/seymour rebuild pattern §7- Rebuild pattern data"));
+        sendCommandLine(ctx, "/seymour rebuild words", "§e/seymour rebuild words §7- Rebuild word matches");
+        sendCommandLine(ctx, "/seymour rebuild analysis", "§e/seymour rebuild analysis §7- Rebuild analysis with current toggles");
+        sendCommandLine(ctx, "/seymour rebuild matches", "§e/seymour rebuild matches §7- Rebuild top 3 match data");
+        sendCommandLine(ctx, "/seymour rebuild pattern", "§e/seymour rebuild pattern §7- Rebuild pattern data");
 
         ctx.getSource().sendFeedback(Component.literal("§8§m----------------------------------------------------"));
         return 1;
@@ -1638,7 +1651,7 @@ public class SeymourCommand {
 
         if (validHexes.size() < 2) {
             ctx.getSource().sendError(Component.literal("§c[Seymour] §7Please provide at least 2 valid hex codes!"));
-            ctx.getSource().sendFeedback(Component.literal("§7Usage: §e/seymour compare <hex1> <hex2> [hex3] ..."));
+            suggestCommandLine(ctx, "/seymour compare ", "§7Usage: §e/seymour compare <hex1> <hex2> [hex3] ...");
             ctx.getSource().sendFeedback(Component.literal("§7Example: §e/seymour compare FF0000 00FF00 0000FF"));
             return 0;
         }
@@ -1715,7 +1728,7 @@ public class SeymourCommand {
     }
 
     private static int showDbHexHelp(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Component.literal("§c[Seymour] §7Usage: §f/seymour db hex <hex>"));
+        suggestCommandLine(ctx, "/seymour db hex ", "§c[Seymour] §7Usage: §f/seymour db hex <hex>");
         ctx.getSource().sendFeedback(Component.literal("§7Example: §f/seymour db hex FF5733"));
         return 0;
     }

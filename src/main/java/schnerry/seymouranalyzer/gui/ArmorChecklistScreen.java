@@ -167,37 +167,22 @@ public class ArmorChecklistScreen extends ModScreen {
                 }
             }
 
-            // Failsafe: append any categories not listed in normalPageOrder at the end
-            // (excluding fade dye categories which are handled separately)
-            String[] fadeDyeNames = {"Aurora", "Black Ice", "Black Opal", "Dusk Dye", "Forest Dye", "Frog", "Hellebore", "Jerry",
-                                     "Kingfisher", "Lava", "Lucky", "Marine",
-                                     "Oasis", "Ocean", "Pastel Sky", "Portal", "Red Tulip", "Rose",
-                                     "Snowflake", "Spooky", "Sunflower", "Sunset", "Warden", "Charcoal", "Beach"};
-            Set<String> fadeDyeSet = new HashSet<>(Arrays.asList(fadeDyeNames));
+            Set<String> fadeDyeNames = loadFadeDyes();
+
+            // Append normal categories not listed in normalPageOrder.
             for (String categoryName : categories.keySet()) {
-                if (!normalPageOrder.contains(categoryName) && !fadeDyeSet.contains(categoryName)) {
+                if (!normalPageOrder.contains(categoryName) && !fadeDyeNames.contains(categoryName)) {
                     SeymourAnalyzer.LOGGER.warn("Category '{}' not in normalPageOrder, appending at end", categoryName);
                     normalPageOrder.add(categoryName);
                 }
             }
 
-            // Load fade dyes from colors.json
-            loadFadeDyes();
-
             // Load custom colors from config
             loadCustomColors();
 
             // Build fade dye page order from fade dye categories
-            String[] fadeDyes = {"Aurora", "Black Ice", "Black Opal", "Dusk Dye", "Forest Dye", "Frog", "Hellebore", "Jerry",
-                                "Kingfisher", "Lava", "Lucky", "Marine",
-                                "Oasis", "Ocean", "Pastel Sky", "Portal", "Red Tulip", "Rose",
-                                "Snowflake", "Spooky", "Sunflower", "Sunset", "Warden", "Charcoal", "Beach"};
-            Arrays.sort(fadeDyes, String.CASE_INSENSITIVE_ORDER);
-            for (String fadeDye : fadeDyes) {
-                if (categories.containsKey(fadeDye)) {
-                    fadeDyePageOrder.add(fadeDye);
-                }
-            }
+            fadeDyePageOrder.addAll(fadeDyeNames);
+            fadeDyePageOrder.sort(String.CASE_INSENSITIVE_ORDER);
 
             // Start with normal page order
             pageOrder = normalPageOrder;
@@ -210,13 +195,13 @@ public class ArmorChecklistScreen extends ModScreen {
         }
     }
 
-    private void loadFadeDyes() {
+    private Set<String> loadFadeDyes() {
         try {
             InputStream inputStream = SeymourAnalyzer.class.getResourceAsStream("/data/seymouranalyzer/colors.json");
 
             if (inputStream == null) {
                 SeymourAnalyzer.LOGGER.error("Could not load colors.json for fade dyes");
-                return;
+                return Collections.emptySet();
             }
 
             Gson gson = new Gson();
@@ -228,7 +213,7 @@ public class ArmorChecklistScreen extends ModScreen {
 
             if (fadeDyes == null) {
                 SeymourAnalyzer.LOGGER.warn("No FADE_DYES section found in colors.json");
-                return;
+                return Collections.emptySet();
             }
 
             // Group stages by fade dye name
@@ -262,9 +247,11 @@ public class ArmorChecklistScreen extends ModScreen {
             SeymourAnalyzer.LOGGER.info("Loaded {} fade dye categories with {} total stages",
                 fadeDyeCategories.size(),
                 fadeDyeCategories.values().stream().mapToInt(List::size).sum());
+            return fadeDyeCategories.keySet();
 
         } catch (Exception e) {
             SeymourAnalyzer.LOGGER.error("Error loading fade dyes", e);
+            return Collections.emptySet();
         }
     }
 

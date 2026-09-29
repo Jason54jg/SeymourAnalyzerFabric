@@ -74,6 +74,7 @@ minecraft_*/
 
 # Conversion helpers (local only)
 scripts/
+/install-latest-mod.ps1
 
 # Local source workbook for generated weight rules
 Weight System.xlsx
